@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDPC Manager · IDF</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2efe9;--surface:#fff;--surface2:#f8f6f2;--border:#e2ddd6;--text:#18160f;--text-muted:#78726a;--accent:#1d4ed8;--accent-light:#eff4ff;--go:#166534;--go-light:#dcfce7;--pge:#6b21a8;--pge-light:#f3e8ff;--lst:#9a3412;--lst-light:#ffedd5;--success:#166534;--radius:12px;--radius-sm:8px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.06);--shadow-lg:0 8px 32px rgba(0,0,0,.12)}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6}
+/* SPLASH */
+#splash{position:fixed;inset:0;z-index:1000;background:#18160f;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s ease,transform .5s ease}
+#splash.hidden{opacity:0;pointer-events:none;transform:scale(1.02)}
+.splash-eyebrow{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,.4);margin-bottom:24px;animation:fadeUp .6s ease both}
+.splash-logo{display:flex;align-items:center;gap:16px;margin-bottom:16px;animation:fadeUp .6s ease .1s both}
+.splash-icon{width:64px;height:64px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 0 40px rgba(29,78,216,.4)}
+.splash-title{font-family:'DM Serif Display',serif;font-size:48px;color:#fff;letter-spacing:-1px;line-height:1}
+.splash-title span{color:#60a5fa}
+.splash-sub{font-size:15px;color:rgba(255,255,255,.45);margin-bottom:48px;letter-spacing:.3px;animation:fadeUp .6s ease .2s both}
+.splash-crc-row{display:flex;gap:12px;margin-bottom:48px;animation:fadeUp .6s ease .3s both}
+.splash-badge{padding:6px 18px;border-radius:24px;font-size:13px;font-weight:700;letter-spacing:1px;border:1.5px solid}
+.sb-go{border-color:#4ade80;color:#4ade80;background:rgba(74,222,128,.08)}.sb-pge{border-color:#c084fc;color:#c084fc;background:rgba(192,132,252,.08)}.sb-lst{border-color:#fb923c;color:#fb923c;background:rgba(251,146,60,.08)}
+.splash-enter{background:linear-gradient(135deg,#1d4ed8,#7c3aed);color:#fff;border:none;padding:16px 48px;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:.3px;box-shadow:0 4px 24px rgba(29,78,216,.4);transition:transform .15s,box-shadow .15s;animation:fadeUp .6s ease .4s both}
+.splash-enter:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(29,78,216,.5)}
+.splash-stats{display:flex;gap:40px;margin-top:48px;animation:fadeUp .6s ease .5s both}
+.splash-stat{text-align:center}.splash-stat-num{font-family:'DM Serif Display',serif;font-size:28px;color:#fff;line-height:1}
+.splash-stat-lbl{font-size:11px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+/* APP */
+#app{display:none}#app.visible{display:block}
+.app-header{background:#18160f;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.06)}
+.header-brand{display:flex;align-items:center;gap:10px}
+.header-icon{width:32px;height:32px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.header-name{font-family:'DM Serif Display',serif;font-size:17px;color:#fff;letter-spacing:-.3px}.header-name span{color:#60a5fa}
+.header-right{display:flex;align-items:center;gap:10px}
+.hdr-badge{padding:3px 10px;border-radius:16px;font-size:11px;font-weight:700;letter-spacing:.5px}
+.hdr-go{background:var(--go-light);color:var(--go)}.hdr-pge{background:var(--pge-light);color:var(--pge)}.hdr-lst{background:var(--lst-light);color:var(--lst)}
+.save-indicator{font-size:11px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:5px;transition:color .3s}.save-indicator.saved{color:#4ade80}
+.save-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.container{max-width:980px;margin:0 auto;padding:28px 20px 60px}
+/* TABS */
+.tabs{display:flex;gap:2px;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px;box-shadow:var(--shadow)}
+.tab-btn{flex:1;background:none;border:none;padding:9px 12px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
+.tab-btn.active{background:var(--text);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15)}.tab-btn:not(.active):hover{color:var(--text);background:var(--surface2)}
+.tab-panel{display:none}.tab-panel.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card-title{font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:10px}
+.card-title .icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+/* FORM */
+.form-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted)}
+.form-group input,.form-group select,.form-group textarea{padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--text);background:var(--surface2);transition:border .15s,box-shadow .15s;outline:none}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(29,78,216,.08)}
+textarea{resize:vertical;min-height:80px}
+/* PAC */
+.pac-single{background:var(--surface2);border:1.5px solid var(--accent);border-radius:var(--radius);padding:18px 16px 14px;position:relative}
+.pac-single-label{position:absolute;top:-10px;left:12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);background:var(--surface);padding:1px 8px;border-radius:4px;border:1px solid var(--accent)}
+.pac-action-area{margin-bottom:10px}.pac-action-area label{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);display:block;margin-bottom:4px}.pac-action-area textarea{width:100%}
+.pac-meta{display:grid;grid-template-columns:1fr 150px 1fr 1fr;gap:10px}.pac-meta .form-group label{font-size:10px}.pac-meta input{font-size:12.5px;padding:7px 10px}
+/* LIBRARY */
+.lib-section{margin-bottom:16px}
+.lib-section-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.lib-hint{font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:#c0b8b0}
+.lib-grid{display:flex;flex-wrap:wrap;gap:7px}
+.lib-chip{padding:7px 13px;border-radius:var(--radius-sm);font-size:12.5px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;color:var(--text);text-align:left;line-height:1.4;white-space:normal;max-width:440px}
+.lib-chip:hover{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}.lib-chip.selected{border-color:var(--accent);background:var(--accent-light);color:var(--accent);font-weight:600}
+/* UNDO BUTTON */
+.field-wrap{position:relative}
+.undo-btn{position:absolute;bottom:8px;right:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:6px;padding:4px 10px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;opacity:.75;z-index:2}
+.undo-btn:hover{border-color:#b91c1c;color:#991b1b;background:#fef2f2;opacity:1}
+.field-wrap textarea{padding-bottom:38px;width:100%}
+/* SITUATION */
+.situation-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.sit-btn{padding:7px 16px;border-radius:24px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text-muted);transition:all .15s}
+.sit-btn:hover{border-color:var(--accent);color:var(--accent)}.sit-btn.s-prog{border-color:var(--go);background:var(--go-light);color:var(--go)}.sit-btn.s-stag{border-color:#b45309;background:#fffbeb;color:#92400e}.sit-btn.s-non{border-color:#b91c1c;background:#fef2f2;color:#991b1b}
+/* COMPLETUDE */
+.completude-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 22px;margin-bottom:16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px}
+.completude-label{font-size:11.5px;font-weight:600;color:var(--text-muted);white-space:nowrap}
+.completude-track{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.completude-fill{height:100%;border-radius:4px;background:var(--accent);transition:width .35s,background .35s}
+.completude-pct{font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;min-width:34px;text-align:right}
+/* PREVIEW */
+.preview-box{background:#fafafa;border:1.5px dashed var(--border);border-radius:var(--radius);padding:18px 22px;margin-top:4px;min-height:60px}
+.preview-box pre{font-family:'DM Sans',sans-serif;font-size:13px;white-space:pre-wrap;word-break:break-word;color:var(--text);line-height:1.8}
+.preview-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px}
+/* BUTTONS */
+.btn-primary{background:var(--text);color:#fff;border:none;padding:10px 22px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn-primary:hover{background:#2d2a20}.btn-primary.copied{background:var(--success)}.btn-primary.accent{background:var(--accent)}.btn-primary.accent:hover{background:#1a44c0}.btn-primary.purple{background:#7c3aed}.btn-primary.purple:hover{background:#6d28d9}
+.btn-secondary{background:none;color:var(--text-muted);border:1.5px solid var(--border);padding:9px 18px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn-secondary:hover{border-color:var(--text-muted);color:var(--text)}
+.actions-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px}
+/* ALERT */
+.alert{background:var(--accent-light);border-left:3px solid var(--accent);border-radius:8px;padding:11px 15px;font-size:13px;color:#1e40af;margin-bottom:16px}
+/* HISTORIQUE */
+.hist-empty{text-align:center;padding:60px 20px;color:var(--text-muted)}.hist-empty-icon{font-size:40px;margin-bottom:12px}
+.hist-list{display:flex;flex-direction:column;gap:10px}
+.hist-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hist-item-info{flex:1;min-width:180px}.hist-item-name{font-weight:600;font-size:14px}.hist-item-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+.hist-item-sit{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;flex-shrink:0}
+.sit-tag-prog{background:var(--go-light);color:var(--go)}.sit-tag-stag{background:#fffbeb;color:#92400e}.sit-tag-non{background:#fef2f2;color:#991b1b}.sit-tag-none{background:var(--surface2);color:var(--text-muted)}
+.hist-actions{display:flex;gap:6px;flex-wrap:wrap}
+.hist-btn{background:none;border:1.5px solid var(--border);border-radius:7px;padding:5px 11px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-muted);transition:all .15s}
+.hist-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}.hist-btn.danger:hover{border-color:#b91c1c;color:#991b1b;background:#fef2f2}.hist-btn.next{border-color:#7c3aed;color:#7c3aed;background:#f5f3ff}.hist-btn.next:hover{background:#ede9fe}
+/* ACCESS GATE */
+.access-gate{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:40px;max-width:440px;margin:40px auto;box-shadow:var(--shadow-lg);text-align:center}
+.access-gate h2{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:8px}
+.access-gate p{color:var(--text-muted);font-size:13px;margin-bottom:24px}
+.access-gate input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;text-align:center;letter-spacing:4px;outline:none;margin-bottom:12px;background:var(--surface2)}
+.access-gate input:focus{border-color:var(--accent);background:#fff}
+.access-gate .error{color:#b91c1c;font-size:12px;margin-top:6px;min-height:18px}
+.access-info{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:12px;color:var(--text-muted);margin-top:16px;text-align:left}
+.access-info strong{color:var(--text)}
+/* DASHBOARD */
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.dash-filter{display:flex;gap:8px;flex-wrap:wrap}
+.dash-filter select{padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;background:var(--surface);color:var(--text);outline:none;cursor:pointer}
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:20px}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+.dash-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.dash-card-name{font-weight:600;font-size:14px}
+.dash-progress-wrap{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:8px 0}
+.dash-progress-fill{height:100%;border-radius:3px;transition:width .4s,background .4s}
+.dash-stats-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:8px}
+.dash-cc-list{display:flex;flex-direction:column;gap:3px;margin-top:8px}
+.dash-cc-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:4px 6px;border-radius:5px;background:var(--surface2)}
+.dash-cc-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dash-cc-dots{display:flex;gap:4px;flex-shrink:0;margin-left:8px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0}.dot.done{background:#22c55e}.dot.partial{background:#f59e0b}
+.month-nav{display:flex;align-items:center;gap:10px}
+.month-nav button{background:none;border:1.5px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px;color:var(--text-muted);transition:all .15s}
+.month-nav button:hover{border-color:var(--accent);color:var(--accent)}
+.month-nav span{font-weight:600;font-size:13px;min-width:90px;text-align:center}
+/* BILAN */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+.stat-card .crc-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.stat-card .crc-rate{font-family:'DM Serif Display',serif;font-size:30px;line-height:1;margin-bottom:4px}
+.stat-card .crc-sub{font-size:11px;color:var(--text-muted)}
+.stat-go .crc-label,.stat-go .crc-rate{color:var(--go)}.stat-pge .crc-label,.stat-pge .crc-rate{color:var(--pge)}.stat-lst .crc-label,.stat-lst .crc-rate{color:var(--lst)}.stat-idf .crc-label,.stat-idf .crc-rate{color:var(--accent)}
+.progress-bar-wrap{margin-top:8px;height:4px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-bar{height:100%;border-radius:3px;transition:width .4s}
+.bar-go{background:var(--go)}.bar-pge{background:var(--pge)}.bar-lst{background:var(--lst)}.bar-idf{background:var(--accent)}
+.axe-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.axe-table th{background:var(--surface2);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);font-weight:700}
+.axe-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+.axe-table tr:last-child td{border-bottom:none}
+.pill-ok{background:var(--go-light);color:var(--go);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.pill-warn{background:var(--lst-light);color:var(--lst);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.pill-bad{background:#fef2f2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#18160f;color:#fff;padding:12px 22px;border-radius:50px;font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);transition:transform .3s ease,opacity .3s ease;opacity:0;pointer-events:none;z-index:999;display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+@media(max-width:640px){.container{padding:14px 12px 48px}.card{padding:18px 16px}.form-row{grid-template-columns:1fr}.pac-meta{grid-template-columns:1fr 1fr}.splash-title{font-size:32px}.splash-stats{gap:24px}.tabs{flex-wrap:wrap}.tab-btn{flex:none;font-size:11px;padding:7px 10px}}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <p class="splash-eyebrow">Lieusaint · Qualité post-entretien</p>
+  <div class="splash-logo">
+    <div class="splash-icon">📊</div>
+    <div class="splash-title">EDPC <span>Manager</span></div>
+  </div>
+  <p class="splash-sub">Traçage normé · Bibliothèque de formules · Suivi des engagements</p>
+  <div class="splash-crc-row">
+    <span class="splash-badge sb-go">GO</span>
+    <span class="splash-badge sb-pge">PGE</span>
+    <span class="splash-badge sb-lst">LST</span>
+  </div>
+  <button class="splash-enter" onclick="enterApp()">Accéder à l'outil →</button>
+  <div class="splash-stats">
+    <div class="splash-stat"><div class="splash-stat-num">161</div><div class="splash-stat-lbl">Conseillers</div></div>
+    <div class="splash-stat"><div class="splash-stat-num">3</div><div class="splash-stat-lbl">CRC couverts</div></div>
+    <div class="splash-stat"><div class="splash-stat-num">85%</div><div class="splash-stat-lbl">Objectif qualité</div></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="header-icon">📊</div>
+      <span class="header-name">EDPC <span>Manager</span></span>
+    </div>
+    <div class="header-right">
+      <span class="save-indicator" id="save-indicator"><span class="save-dot"></span><span id="save-label">Non sauvegardé</span></span>
+      <span class="hdr-badge hdr-go">GO</span><span class="hdr-badge hdr-pge">PGE</span><span class="hdr-badge hdr-lst">LST</span>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('generateur',this)">✏️ Générateur</button>
+      <button class="tab-btn" onclick="switchTab('suivi',this)">📈 Suivi EDPC</button>
+      <button class="tab-btn" onclick="switchTab('historique',this)">🕓 Historique</button>
+      <button class="tab-btn" onclick="switchTab('bibliotheque',this)">📚 Bibliothèque</button>
+      <button class="tab-btn" onclick="switchTab('bilan',this)">📊 Bilan CRC</button>
+    </div>
+
+    <!-- GÉNÉRATEUR -->
+    <div id="tab-generateur" class="tab-panel active">
+      <div class="alert">💡 Renseignez les champs, sélectionnez vos formules ou rédigez librement — puis copiez le traçage en un clic.</div>
+      <div class="completude-bar">
+        <span class="completude-label">Complétude</span>
+        <div class="completude-track"><div class="completude-fill" id="completude-fill" style="width:0%"></div></div>
+        <span class="completude-pct" id="completude-pct">0%</span>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#eff4ff">👤</span>Identification</div>
+        <div class="form-row">
+          <div class="form-group"><label>CRC</label><select id="f-crc" onchange="onCrcChange()"><option value="">— Choisir —</option><option>GO</option><option>PGE</option><option>LST</option></select></div>
+          <div class="form-group"><label>Manager</label><select id="f-manager" onchange="onManagerChange()"><option value="">— Choisir d'abord le CRC —</option></select></div>
+          <div class="form-group"><label>Conseiller (CC)</label><select id="f-prenom" onchange="onPrenomChange()"><option value="">— Choisir d'abord le manager —</option></select></div>
+          <div class="form-group"><label>Période couverte</label><select id="f-periode"><option value="">— Choisir —</option><option>T1</option><option>T2</option><option>T3</option><option>T4</option></select></div>
+          <div class="form-group"><label>Année</label><input type="number" id="f-annee" value="2026" min="2020" max="2099"></div>
+          <div class="form-group"><label>Date de l'EDPC</label><input type="date" id="f-date-edpc"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#dcfce7">🎯</span>Priorités identifiées</div>
+        <div class="lib-section"><div class="lib-section-title">Formules types <span class="lib-hint">Sélection automatique → Auto-analyse manager</span></div><div class="lib-grid" id="lib-priorites"></div></div>
+        <div class="form-group">
+          <label>Priorité(s) retenue(s)</label>
+          <div class="field-wrap">
+            <textarea id="f-priorites" placeholder="Sélectionnez ci-dessus ou rédigez librement…"></textarea>
+            <button class="undo-btn" onclick="undoLastLine('f-priorites','f-axe')" title="Annuler la dernière saisie">↩ Annuler</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#fef2f2">🧭</span>Auto-Analyse du manager</div>
+        <div class="lib-section"><div class="lib-section-title">Pré-rempli depuis les priorités <span class="lib-hint">Complétez les [X%] et ajustez librement</span></div><div class="lib-grid" id="lib-axes"></div></div>
+        <div class="form-group">
+          <label>Auto-analyse du manager</label>
+          <div class="field-wrap">
+            <textarea id="f-axe" rows="4" placeholder="Se remplit automatiquement selon vos priorités — complétez les [X%]…"></textarea>
+            <button class="undo-btn" onclick="undoLastLine('f-axe',null)" title="Annuler la dernière ligne">↩ Annuler</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#fff7ed">📋</span>Plan d'Action et de Coaching (PAC)</div>
+        <div class="lib-section"><div class="lib-section-title">Actions types SMART <span class="lib-hint">Date cible et progression incluses dans la phrase</span></div><div class="lib-grid" id="lib-pac"></div></div>
+        <div class="pac-single">
+          <span class="pac-single-label">Action de coaching</span>
+          <div class="pac-action-area">
+            <label>Action définie</label>
+            <div class="field-wrap">
+              <textarea id="f-pac-action" rows="4" placeholder="Sélectionnez ci-dessus ou décrivez l'action — la date cible et la progression attendue sont intégrées dans la phrase…"></textarea>
+              <button class="undo-btn" onclick="undoLastLine('f-pac-action',null)" title="Annuler la dernière saisie">↩ Annuler</button>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:10px">
+            <label>Engagement du manager</label>
+            <input type="text" id="f-pac-eng-mgr" placeholder="ex : coaching CP hebdo, double écoute avant le [date]…">
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#eff4ff">🔁</span>Feedback manager</div>
+        <div style="margin-bottom:14px">
+          <div class="lib-section-title" style="margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:6px">Situation du CC depuis le dernier EDPC</div>
+          <div class="situation-row">
+            <button class="sit-btn" id="sit-prog" onclick="setSituation('progression')">✅ En progression</button>
+            <button class="sit-btn" id="sit-stag" onclick="setSituation('stagnation')">⚠️ En stagnation</button>
+            <button class="sit-btn" id="sit-non"  onclick="setSituation('non-atteinte')">🔴 Engagements non atteints</button>
+          </div>
+        </div>
+        <div class="lib-section"><div class="lib-section-title">Formules types <span class="lib-hint">Sélectionnez une situation pour filtrer</span></div><div class="lib-grid" id="lib-feedback"></div></div>
+        <div class="form-group"><label>Feedback tracé</label><textarea id="f-feedback" placeholder="Sélectionnez ci-dessus ou rédigez librement…"></textarea></div>
+        <div class="form-row" style="margin-top:10px"><div class="form-group"><label>Date du prochain point de suivi</label><input type="date" id="f-feedback-date"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#f3e8ff">💬</span>Auto-analyse du CC</div>
+        <div class="lib-section"><div class="lib-section-title">Formules types — personnalisées avec le prénom du CC <span class="lib-hint">Renseignez d'abord le conseiller</span></div><div class="lib-grid" id="lib-autoanalyse"></div></div>
+        <div class="form-group"><label>Auto-analyse tracée</label><textarea id="f-autoanalyse" placeholder="Sélectionnez ci-dessus ou rédigez librement…"></textarea></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#f2efe9">📄</span>Traçage généré — prêt à copier</div>
+        <div class="preview-label">Aperçu du traçage normé</div>
+        <div class="preview-box"><pre id="preview-text">Complétez les champs ci-dessus pour générer le traçage…</pre></div>
+        <div class="actions-row">
+          <button class="btn-primary accent" id="copy-btn" onclick="copyText()">📋 Copier le traçage</button>
+          <button class="btn-primary purple" onclick="saveTracage()">💾 Sauvegarder</button>
+          <button class="btn-secondary" onclick="resetForm()">↺ Réinitialiser</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUIVI EDPC -->
+    <div id="tab-suivi" class="tab-panel">
+      <div id="suivi-gate"></div>
+    </div>
+
+    <!-- HISTORIQUE -->
+    <div id="tab-historique" class="tab-panel">
+      <div class="alert">🕓 Retrouvez ici vos traçages sauvegardés. Relancez un EDPC suivant en un clic.</div>
+      <div id="hist-container"></div>
+    </div>
+
+    <!-- BIBLIOTHÈQUE -->
+    <div id="tab-bibliotheque" class="tab-panel">
+      <div class="alert">📖 Toutes les formules types par rubrique. Cliquez pour copier directement.</div>
+      <div id="biblio-full"></div>
+    </div>
+
+    <!-- BILAN -->
+    <div id="tab-bilan" class="tab-panel">
+      <div class="stats-grid">
+        <div class="stat-card stat-go"><div class="crc-label">CRC GO</div><div class="crc-rate">76%</div><div class="crc-sub">Seuil : 85%</div><div class="progress-bar-wrap"><div class="progress-bar bar-go" style="width:76%"></div></div></div>
+        <div class="stat-card stat-pge"><div class="crc-label">CRC PGE</div><div class="crc-rate">83%</div><div class="crc-sub">Seuil : 85%</div><div class="progress-bar-wrap"><div class="progress-bar bar-pge" style="width:83%"></div></div></div>
+        <div class="stat-card stat-lst"><div class="crc-label">CRC LST</div><div class="crc-rate">72%</div><div class="crc-sub">Seuil : 85%</div><div class="progress-bar-wrap"><div class="progress-bar bar-lst" style="width:72%"></div></div></div>
+        <div class="stat-card stat-idf"><div class="crc-label">IDF Global</div><div class="crc-rate">76%</div><div class="crc-sub">161 CC · Objectif : 85%</div><div class="progress-bar-wrap"><div class="progress-bar bar-idf" style="width:76%"></div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Détail par axe — IDF</div>
+        <table class="axe-table">
+          <thead><tr><th>Axe</th><th>GO</th><th>PGE</th><th>LST</th><th>Priorité</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Feedback tracé</strong></td><td><span class="pill-bad">4%</span></td><td><span class="pill-warn">48%</span></td><td><span class="pill-warn">38%</span></td><td><span class="pill-bad">🔴 Critique</span></td></tr>
+            <tr><td><strong>Planification des PAC</strong></td><td><span class="pill-warn">30%</span></td><td><span class="pill-warn">42%</span></td><td><span class="pill-bad">22%</span></td><td><span class="pill-bad">🔴 Critique</span></td></tr>
+            <tr><td><strong>Auto-analyse CC</strong></td><td><span class="pill-warn">55%</span></td><td><span class="pill-ok">89%</span></td><td><span class="pill-warn">51%</span></td><td><span class="pill-warn">🟠 Important</span></td></tr>
+            <tr><td><strong>Indicateurs chiffrés</strong></td><td>—</td><td><span class="pill-warn">57%</span></td><td><span class="pill-bad">28%</span></td><td><span class="pill-warn">🟠 Important</span></td></tr>
+            <tr><td><strong>Priorités identifiées</strong></td><td><span class="pill-ok">99%</span></td><td><span class="pill-ok">97%</span></td><td><span class="pill-ok">99%</span></td><td><span class="pill-ok">✅ Fort</span></td></tr>
+            <tr><td><strong>PAC renseigné</strong></td><td><span class="pill-ok">100%</span></td><td><span class="pill-ok">98%</span></td><td><span class="pill-ok">97%</span></td><td><span class="pill-ok">✅ Fort</span></td></tr>
+            <tr><td><strong>Référentiel EDPC</strong></td><td><span class="pill-ok">93%</span></td><td><span class="pill-ok">91%</span></td><td>—</td><td><span class="pill-ok">✅ Fort</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================
+// DONNÉES ÉQUIPES (issues du fichier Excel)
+// =====================================================
+const TEAMS = {
+  GO: {
+    "Alissa":     ["Valerie Blot","Khalil El Amri","Maxime Fronczak","Anis M Hamdi","Mélanie Vey","Ange Djike","Marie Révereau"],
+    "Josephine":  ["Stéphane Dorr","Anahide Fatemi","Jade Salou","Rhizlaine Hamdi","David Pinto","Hela Gadi","Linda Hacheur","Léa Clemenceau","Régina Mea","Brahim Nasri"],
+    "Morad":      ["Emilien Bansept","Tiphaine Coste","Sliman Marref","Luca Vadeleux","Mairam Djigo","Ayrton Olivier","Amel Djemmam","Florue Hernandez"],
+    "Martin":     ["Mohamed Drame","Laurine Euphémie","Kahina Abed","Chihira Mendil","Afifah Samih","Yhuval Tskala","Saliha Djeghlaf"],
+    "Bénédicte":  ["Guillaume Barle","Jimmy Bellassen","Oumar Diaby","Angel Manzano","Ibrahim Sylla","Aurélie Beaufumé","Mayline Coudray","Fallou M'Bon","Christophe Yeboah","Rémi Hardy"],
+  },
+  PGE: {
+    "Clément":    ["Lauwenza Barthélemy","William Rimo","Awa Soumahoro","Christelle Loff","Marie-Eve Morand-Achour","Florian Noury","Soraya Aksouri","Danielle Assous","Diane Collignon"],
+    "Vloreta":    ["Guy Gensisi","Brice Hilaire","Hassan Mamoudou","Nahima Chikhi","Nathalie Cordon","Lydia Benmessaoud","Hervé Emile","Nicola Goupil","Soumia Ouinkhir"],
+    "Lénaïc":     ["Sara Badia","Tiguida Camara","Kamal Goual","Bertrand Fesneau","Mamadou Fofana","Hawa-Bobo Nimaga","Jeremy Thomas"],
+    "Claudine":   ["Linda Grevsbo","Fatoumata Fofana","Séverine Boulay","Mireille Mazy","Cécile Plat","Tania Sileber","Marie-Myriam Tamba-Tsoko","Nadia Colin-Dehak","Cristalina Da-Silva"],
+    "Helena":     ["Virginie Doyen","Lydie Elisha N'Guessan","Mélanie Vale-Da-Serra","Lydie-Madison Dos Santos","Sofia Reggad","Tasnime Fidahoussen","Noura Si-Fodil","Anthony Bieber"],
+    "Sofia":      ["Raphaëlle Bouillon","Sylvain Bouzonie","Ismaël Haroual","Habibatou Matoudidi","Sophie Yssap","Clément Claustrat","Alexis Guehairia","Amal Belhamri"],
+    "Mickaël":    ["Elisa Cannizzaro","Sarah Sainte","Kelly Saint-Val","Djenabou Guirassy","Adama Diarra","Omar Morsy","Souad El-Merabti","Dalila Maouche","Margaux Wallet"],
+    "Josefina":   ["Sitty Mohamed","Gokmen Yilmaz","Maimouna Napo","Haydn Salarzadeh Amiri"],
+    "Cateline":   ["Karima Laouani-Soufi","Helena Mendes Da Fonseca","Anaïs Faivre","Manuel Neret","Virginie Nègovanovic","Christelle Boissard Calcul","Abdel Boussalia"],
+  },
+  LST: {
+    "Benoît":     ["Olivier-Franck Leclerc","Emilie Bernard","Charlène Coll","Lisa Guyonnet","Laurelyne Manuel De Condinguy","Malika El-Adjam","Sébastien Jenart"],
+    "David":      ["Elizeth Dizikama","Nicolas Doucet","Méline Mallard","Jessica Mouton-Lavembo","Ynnas Mellahi","Emilie Auger","Inès Dos Anjos Pereira","Audrey Demory","Ingrid Ferry"],
+    "Jennifer":   ["Ilham Douich","Alexis Lehoux","Manon Pillot","Abdelwahab Boutik","Samantha El Gueddar","Cintyha Marseglia","Oumarou Diarra","Hatouma Doucouré","Virginie Fernandes"],
+    "Sylvie":     ["Méliane Bessemoulin","Adrien Ledain","Nadia Nahas","Antoinette Novais Pereira","Mylène Muslic","Sandrine Terrentroy","Sabrina Cadol","Amel Lassoued"],
+    "Sylvain":    ["Emric Siouparsam","Ophélie Moulin","Julie Martin","Aurélie Menard","Muriel Ralitera","Florian Coston"],
+    "Horizon":    ["Antoine Benoît","Sébastien Blot","Marie Colas","Stéphanie Farret","Alexane Gibault","Raphaëlle Hernandez","Véronique Jollet","Teninke Koïta","Alexandre Leduc","Angeline Lemaire"],
+  }
+};
+
+// Codes d'accès : prénom manager (minuscule) → code 4 chiffres
+// Chaque manager a un code = initiales + 2 chiffres simples
+// Le superviseur a un code admin
+const ACCESS_CODES = {
+  // GO
+  "alissa":"GO01","josephine":"GO02","morad":"GO03","martin":"GO04","bénédicte":"GO05",
+  // PGE
+  "clément":"PG01","vloreta":"PG02","lénaïc":"PG03","claudine":"PG04","helena":"PG05","sofia":"PG06","mickaël":"PG07","josefina":"PG08","cateline":"PG09",
+  // LST
+  "benoît":"LS01","david":"LS02","jennifer":"LS03","sylvie":"LS04","sylvain":"LS05","horizon":"LS06",
+  // Admin superviseur
+  "admin":"CODIR2026"
+};
+
+// =====================================================
+// BIBLIOTHÈQUE
+// =====================================================
+const LIBRARY = {
+  "Priorités identifiées": [
+    "Vente sur rebond [X%]",
+    "Ventes de service — Protection Facture et/ou AD [X%]",
+    "Ventes GAZ en FO [X%]",
+    "Ventes OM en FO [X%]",
+    "Apports d'affaires Sowee [X%]",
+    "Apports d'affaires Izi [X%]",
+    "Apports d'affaires Izi Confort [X%]",
+    "Apports d'affaires Homiris [X%]",
+    "Diminution du taux d'IPAG [X%]",
+    "Prod BO [X%]","Prod FO [X%]","Sat FO [X%]","Sat BO [X%]",
+    "Diminution du taux de rebonds [X%]","Qualité des ventes [X%]",
+  ],
+  "Auto-analyse CC": [
+    "exprime une prise de conscience sur l'axe identifié et comprend les écarts observés.",
+    "reconnaît les difficultés rencontrées et identifie ses propres leviers de progression.",
+    "propose lui-même une piste d'amélioration concrète sur cet axe.",
+    "se fixe un niveau de performance à atteindre : [X%] d'ici le [date].",
+    "évalue son niveau actuel à [X%] et vise [Y%] sur la prochaine période.",
+    "s'engage à mettre en pratique les actions définies lors de cet EDPC.",
+    "exprime sa motivation à progresser et comprend l'enjeu de l'indicateur travaillé.",
+    "partage ses réussites sur [axe] et identifie ce qui a permis d'atteindre ce niveau.",
+    "reconnaît le gap entre le réalisé ([X%]) et l'attendu ([Y%]) et propose des pistes concrètes.",
+  ],
+  "Plan d'action (PAC)": [
+    "Double écoute CP/RE avant le [date] : objectif taux de [X%] — progression attendue de [Y pts] à mesurer à cette échéance.",
+    "Double écoute conseiller expert vente : [x] appels enregistrés/semaine — progression mesurée le [date], objectif [X%].",
+    "Coaching CP planifié avant le [date] — objectif [X%] sur [indicateur], résultat attendu à confirmer lors du prochain EDPC.",
+    "Marguerite : travail posture conseil d'ici le [date] — progression attendue de [X pts] sur [indicateur].",
+    "Apport culture vente : atteindre [X%] sur [indicateur] avant le [date] — point de mesure fixé à cette date.",
+    "Suivi hebdo des indicateurs chaque [jour] jusqu'au [date] — objectif [X%] à atteindre à cette échéance.",
+    "Passer de [X%] à [Y%] sur [indicateur] d'ici le [date] — mesure de progression lors du prochain EDPC.",
+    "Enregistrement de [x] appels/semaine avec auto-évaluation — bilan quantitatif le [date], objectif [X%].",
+  ],
+  "Feedback — En progression": [
+    "Depuis notre dernier point, [Prénom] a clairement progressé sur [axe] — on voit concrètement [observation].",
+    "Bonne dynamique observée lors de la double écoute du [date] : [fait précis], c'est encourageant.",
+    "Les actions définies ensemble ont été mises en pratique et les résultats sont là — à maintenir.",
+    "[Prénom] gagne en aisance sur [axe], ce qui se traduit directement par [résultat].",
+    "Le niveau est passé de [X%] à [Y%] sur la période — belle évolution à consolider.",
+    "Les engagements du dernier EDPC ont été tenus, la dynamique est positive et mérite d'être encouragée.",
+  ],
+  "Feedback — En stagnation": [
+    "Les résultats de [Prénom] sur [axe] restent proches de [X%] sans évolution marquée — on va revoir ensemble ce qui bloque.",
+    "Les actions ont été engagées mais n'ont pas encore produit les effets attendus — c'est normal, on ajuste.",
+    "Le niveau se stabilise à [X%] — on va affiner le plan d'action pour relancer la progression.",
+    "Des efforts sont visibles, mais la progression n'est pas encore au rendez-vous — on identifie les freins ensemble.",
+    "On a pris le temps de revoir ce qui limite la progression et on repart sur des priorités recentrées.",
+    "Un suivi plus rapproché est mis en place pour accompagner [Prénom] dans cette phase.",
+  ],
+  "Feedback — Engagements non atteints": [
+    "Les objectifs fixés lors du dernier EDPC n'ont pas été atteints : [indicateur] est à [X%] pour un attendu de [Y%] — on fait le point sereinement.",
+    "Un écart est constaté entre ce qui avait été prévu et ce qui a été réalisé — on l'analyse ensemble sans jugement.",
+    "On a eu un échange factuel et constructif sur les résultats de la période et les étapes non franchies.",
+    "On repart sur un nouveau plan d'action avec des jalons intermédiaires pour faciliter l'atteinte des objectifs.",
+    "Des leviers concrets ont été identifiés ensemble — [Prénom] repart avec une feuille de route claire.",
+    "Un accompagnement renforcé est mis en place pour permettre à [Prénom] d'atteindre ses prochains objectifs.",
+  ],
+};
+
+const MANAGER_ANALYSE_MAP = {
+  "Vente sur rebond":            "Sur la vente sur rebond, le taux actuel est de [X%] — [réussite / point de vigilance] sur la période.",
+  "Ventes de service":           "Sur les ventes de service (Protection Facture / AD), le taux est de [X%] — [en ligne avec l'objectif / axe à renforcer].",
+  "Ventes GAZ en FO":            "Sur les ventes GAZ en FO, le réalisé est de [X] pour un objectif de [Y] — [en avance / dans les objectifs / écart à résorber].",
+  "Ventes OM en FO":             "Sur les ventes OM en FO, le réalisé est de [X] pour un objectif de [Y] — [performance satisfaisante / effort à maintenir / axe de progression identifié].",
+  "Apports d'affaires Sowee":   "Les apports d'affaires Sowee sont à [X%] — [en progression / en recul] par rapport à la période précédente.",
+  "Apports d'affaires Izi":     "Les apports d'affaires Izi atteignent [X%] — l'équipe [maîtrise bien / doit progresser sur] ce levier.",
+  "Apports d'affaires Izi Confort": "Les apports d'affaires Izi Confort sont à [X%] — [point fort / axe de travail] identifié.",
+  "Apports d'affaires Homiris": "Les apports d'affaires Homiris sont à [X%] — [point fort / axe de travail] pour le prochain cycle.",
+  "Diminution du taux d'IPAG":  "Le taux d'IPAG est à [X%] — [en amélioration / nécessite un plan d'action renforcé].",
+  "Prod BO":                     "La prod BO affiche [X%] — [les objectifs sont atteints / un effort est nécessaire].",
+  "Prod FO":                     "La prod FO est à [X%] — [performance en ligne avec les attendus / écart à résorber].",
+  "Sat FO":                      "La Sat FO ressort à [X%] — [satisfaisante / des axes de progrès ont été identifiés].",
+  "Sat BO":                      "La Sat BO est à [X%] — [les retours sont positifs / des points de friction persistent].",
+  "Diminution du taux de rebonds": "Le taux de rebonds est de [X%] — [en diminution conforme à l'objectif / effort à maintenir].",
+  "Qualité des ventes":          "La qualité des ventes est évaluée à [X%] — [les critères sont respectés / des écarts ont été détectés].",
+};
+
+// =====================================================
+// ÉTAT
+// =====================================================
+let currentSituation = null;
+let autoSaveTimer = null;
+let currentAccessRole = null; // null | 'manager:NomManager' | 'admin'
+let dashMonth = new Date().toISOString().slice(0,7);
+
+// =====================================================
+// SPLASH
+// =====================================================
+function enterApp() {
+  document.getElementById('splash').classList.add('hidden');
+  setTimeout(() => {
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+  }, 500);
+  loadDraft();
+  renderLibrary();
+  generatePreview();
+}
+
+// =====================================================
+// IDENTIFICATION CASCADÉE
+// =====================================================
+function getManagers(crc) { return crc && TEAMS[crc] ? Object.keys(TEAMS[crc]).sort() : []; }
+function getConseillers(crc, mgr) { return crc && mgr && TEAMS[crc]?.[mgr] ? [...TEAMS[crc][mgr]].sort() : []; }
+
+function onCrcChange() {
+  const crc = document.getElementById('f-crc').value;
+  const mgrSel = document.getElementById('f-manager');
+  mgrSel.innerHTML = '<option value="">— Choisir le manager —</option>';
+  document.getElementById('f-prenom').innerHTML = '<option value="">— Choisir d\'abord le manager —</option>';
+  getManagers(crc).forEach(m => { const o=document.createElement('option'); o.value=m; o.textContent=m; mgrSel.appendChild(o); });
+  generatePreview();
+}
+function onManagerChange() {
+  const crc = document.getElementById('f-crc').value;
+  const mgr = document.getElementById('f-manager').value;
+  const ccSel = document.getElementById('f-prenom');
+  ccSel.innerHTML = '<option value="">— Choisir le conseiller —</option>';
+  getConseillers(crc, mgr).forEach(cc => { const o=document.createElement('option'); o.value=cc; o.textContent=cc; ccSel.appendChild(o); });
+  renderAutoAnalyseChips();
+  generatePreview();
+}
+function onPrenomChange() { renderAutoAnalyseChips(); generatePreview(); }
+
+// =====================================================
+// UTILITAIRES
+// =====================================================
+function v(id) { return document.getElementById(id)?.value?.trim() || ''; }
+function getPrenom() { const val = v('f-prenom'); if(!val) return '[Prénom CC]'; return val.split(' ')[0]; }
+function formatDate(s) { if(!s) return ''; const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
+function showToast(msg, dur=2500) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),dur); }
+
+// Correspondance précise priorité → clé MANAGER_ANALYSE_MAP
+// Évite les faux positifs (ex: "Apports" qui matchait toutes les priorités "Apports d'affaires X")
+function findManagerKey(text) {
+  const t = text.toLowerCase();
+  // Ordre du plus spécifique au moins spécifique pour éviter les faux positifs
+  const orderedKeys = [
+    "Ventes de service",
+    "Ventes GAZ en FO",
+    "Ventes OM en FO",
+    "Apports d'affaires Izi Confort",
+    "Apports d'affaires Izi",
+    "Apports d'affaires Homiris",
+    "Apports d'affaires Sowee",
+    "Diminution du taux d'IPAG",
+    "Diminution du taux de rebonds",
+    "Vente sur rebond",
+    "Qualité des ventes",
+    "Prod BO",
+    "Prod FO",
+    "Sat FO",
+    "Sat BO",
+  ];
+  return orderedKeys.find(k => t.includes(k.toLowerCase())) || null;
+}
+
+function undoLastLine(fieldId, linkedFieldId) {
+  const el = document.getElementById(fieldId);
+  if (!el || !el.value.trim()) { showToast('Rien à annuler'); return; }
+  const lines = el.value.split('\n');
+  let removedLine = '';
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (lines[i].trim()) { removedLine = lines[i]; lines.splice(i, 1); break; }
+  }
+  while (lines.length && !lines[lines.length-1].trim()) lines.pop();
+  el.value = lines.join('\n');
+  el.dispatchEvent(new Event('input'));
+  // Si priorités, supprimer aussi la ligne correspondante dans auto-analyse manager
+  if (fieldId === 'f-priorites' && removedLine && linkedFieldId) {
+    const key = findManagerKey(removedLine);
+    if (key && MANAGER_ANALYSE_MAP[key]) {
+      const phrase = MANAGER_ANALYSE_MAP[key].slice(0, 35);
+      const axeEl = document.getElementById(linkedFieldId);
+      if (axeEl) {
+        const axeLines = axeEl.value.split('\n').filter(l => !l.includes(phrase));
+        while (axeLines.length && !axeLines[axeLines.length-1].trim()) axeLines.pop();
+        axeEl.value = axeLines.join('\n');
+        axeEl.dispatchEvent(new Event('input'));
+      }
+    }
+  }
+  generatePreview();
+  showToast('↩ Dernière saisie annulée');
+}
+
+function appendToField(fieldId, text, btn) {
+  const el = document.getElementById(fieldId);
+  if (!el) return;
+  el.value += (el.value.trim() ? '\n' : '') + text;
+  el.dispatchEvent(new Event('input'));
+  if (btn) { btn.classList.add('selected'); setTimeout(() => btn.classList.remove('selected'), 800); }
+  // Auto-injection dans auto-analyse manager lors du clic sur une priorité
+  if (fieldId === 'f-priorites') {
+    const key = findManagerKey(text);
+    if (key && MANAGER_ANALYSE_MAP[key]) {
+      const phrase = MANAGER_ANALYSE_MAP[key];
+      const axeEl = document.getElementById('f-axe');
+      if (axeEl && !axeEl.value.includes(phrase.slice(0, 35))) {
+        axeEl.value += (axeEl.value.trim() ? '\n' : '') + phrase;
+        axeEl.dispatchEvent(new Event('input'));
+      }
+    }
+  }
+  generatePreview();
+}
+
+// =====================================================
+// CHIPS
+// =====================================================
+function renderAutoAnalyseChips() {
+  const el=document.getElementById('lib-autoanalyse'); if(!el) return;
+  const prenom=getPrenom(); el.innerHTML='';
+  LIBRARY["Auto-analyse CC"].forEach(phrase => {
+    const btn=document.createElement('button'); btn.className='lib-chip';
+    btn.textContent=`${prenom} ${phrase}`;
+    btn.onclick=()=>appendToField('f-autoanalyse',`${getPrenom()} ${phrase}`,btn);
+    el.appendChild(btn);
+  });
+}
+function renderManagerAxesChips() {
+  const el=document.getElementById('lib-axes'); if(!el) return;
+  const prio=v('f-priorites'); el.innerHTML='';
+  Object.entries(MANAGER_ANALYSE_MAP).forEach(([key,phrase]) => {
+    // Affiche uniquement les formules dont la clé est présente dans les priorités (matching exact)
+    if(prio && !prio.toLowerCase().includes(key.toLowerCase())) return;
+    const btn=document.createElement('button'); btn.className='lib-chip'; btn.textContent=phrase;
+    btn.onclick=()=>appendToField('f-axe',phrase,btn); el.appendChild(btn);
+  });
+}
+function renderFeedbackChips() {
+  const el=document.getElementById('lib-feedback'); if(!el) return;
+  el.innerHTML=''; const prenom=getPrenom();
+  const cats=currentSituation
+    ?[`Feedback — ${currentSituation==='progression'?'En progression':currentSituation==='stagnation'?'En stagnation':'Engagements non atteints'}`]
+    :['Feedback — En progression','Feedback — En stagnation','Feedback — Engagements non atteints'];
+  cats.forEach(cat=>{
+    (LIBRARY[cat]||[]).forEach(phrase=>{
+      const display=phrase.replace(/\[Prénom\]/g,prenom);
+      const btn=document.createElement('button'); btn.className='lib-chip'; btn.textContent=display;
+      btn.onclick=()=>appendToField('f-feedback',display,btn); el.appendChild(btn);
+    });
+  });
+}
+function renderPacChips() {
+  const el=document.getElementById('lib-pac'); if(!el) return; el.innerHTML='';
+  LIBRARY["Plan d'action (PAC)"].forEach(phrase=>{
+    const btn=document.createElement('button'); btn.className='lib-chip'; btn.textContent=phrase;
+    btn.onclick=()=>appendToField('f-pac-action',phrase,btn); el.appendChild(btn);
+  });
+}
+function renderSimpleChips(cat,cid,fid) {
+  const el=document.getElementById(cid); if(!el) return; el.innerHTML='';
+  (LIBRARY[cat]||[]).forEach(phrase=>{
+    const btn=document.createElement('button'); btn.className='lib-chip'; btn.textContent=phrase;
+    btn.onclick=()=>appendToField(fid,phrase,btn); el.appendChild(btn);
+  });
+}
+function renderLibrary() {
+  renderSimpleChips("Priorités identifiées","lib-priorites","f-priorites");
+  renderManagerAxesChips(); renderAutoAnalyseChips(); renderFeedbackChips(); renderPacChips();
+  renderBiblio();
+}
+function renderBiblio() {
+  const biblio=document.getElementById('biblio-full'); if(!biblio) return; biblio.innerHTML='';
+  [{t:"Priorités identifiées",p:LIBRARY["Priorités identifiées"]},
+   {t:"Auto-analyse CC",p:LIBRARY["Auto-analyse CC"],pre:true},
+   {t:"Plan d'action (PAC)",p:LIBRARY["Plan d'action (PAC)"]},
+   {t:"Feedback — En progression",p:LIBRARY["Feedback — En progression"]},
+   {t:"Feedback — En stagnation",p:LIBRARY["Feedback — En stagnation"]},
+   {t:"Feedback — Engagements non atteints",p:LIBRARY["Feedback — Engagements non atteints"]},
+   {t:"Auto-analyse du manager",p:Object.values(MANAGER_ANALYSE_MAP)},
+  ].forEach(({t,p,pre})=>{
+    const sec=document.createElement('div'); sec.className='card';
+    sec.innerHTML=`<div class="card-title">${t}</div><div class="lib-grid"></div>`;
+    const grid=sec.querySelector('.lib-grid');
+    p.forEach(phrase=>{
+      const display=pre?`[Prénom] ${phrase}`:phrase;
+      const btn=document.createElement('button'); btn.className='lib-chip'; btn.textContent=display;
+      btn.onclick=()=>navigator.clipboard.writeText(display).then(()=>{const o=btn.textContent;btn.textContent='✅ Copié !';setTimeout(()=>{btn.textContent=o;},1500);});
+      grid.appendChild(btn);
+    });
+    biblio.appendChild(sec);
+  });
+}
+
+// =====================================================
+// SITUATION
+// =====================================================
+function setSituation(sit) {
+  currentSituation=sit;
+  document.querySelectorAll('.sit-btn').forEach(b=>b.classList.remove('s-prog','s-stag','s-non'));
+  const m={progression:['sit-prog','s-prog'],stagnation:['sit-stag','s-stag'],'non-atteinte':['sit-non','s-non']};
+  const [id,cls]=m[sit]; document.getElementById(id)?.classList.add(cls); renderFeedbackChips();
+}
+
+// =====================================================
+// PREVIEW
+// =====================================================
+function generatePreview() {
+  const crc=v('f-crc')||'[CRC]', ccFull=v('f-prenom')||'[Conseiller]', cc=getPrenom();
+  const mgr=v('f-manager')||'[Manager]', dateEdpc=formatDate(v('f-date-edpc'))||'[date EDPC]';
+  const per=v('f-periode')?`${v('f-periode')} ${v('f-annee')}`:'[période]';
+  const priorites=v('f-priorites'),autoanalyse=v('f-autoanalyse'),feedback=v('f-feedback');
+  const feedbackDate=formatDate(v('f-feedback-date')),axe=v('f-axe');
+  const pacAction=v('f-pac-action'),pacEngMgr=v('f-pac-eng-mgr');
+  let L=[];
+  L.push(`📋 TRAÇAGE EDPC — CRC ${crc}`);
+  L.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  L.push(`Conseiller : ${ccFull}`); L.push(`Manager    : ${mgr}`);
+  L.push(`Date EDPC  : ${dateEdpc}   |   Période : ${per}`); L.push('');
+  if(priorites){L.push(`🎯 PRIORITÉS IDENTIFIÉES`);priorites.split('\n').forEach(l=>l.trim()&&L.push(`   • ${l.trim()}`));L.push('');}
+  if(axe){L.push(`🧭 AUTO-ANALYSE DU MANAGER`);axe.split('\n').forEach(l=>l.trim()&&L.push(`   ${l.trim()}`));L.push('');}
+  if(pacAction){
+    L.push(`📋 PLAN D'ACTION ET DE COACHING (PAC)`);
+    pacAction.split('\n').forEach(l=>l.trim()&&L.push(`   → ${l.trim()}`));
+    if(pacEngMgr)L.push(`   Engagement manager : ${pacEngMgr}`);
+    L.push('');
+  }
+  if(feedback||feedbackDate){
+    const sl=currentSituation==='progression'?' — EN PROGRESSION':currentSituation==='stagnation'?' — EN STAGNATION':currentSituation==='non-atteinte'?' — ENGAGEMENTS NON ATTEINTS':'';
+    L.push(`🔁 FEEDBACK MANAGER${sl}`);
+    if(feedback)feedback.split('\n').forEach(l=>l.trim()&&L.push(`   ${l.trim()}`));
+    if(feedbackDate)L.push(`   Prochain suivi : ${feedbackDate}`);
+    L.push('');
+  }
+  if(autoanalyse){L.push(`💬 AUTO-ANALYSE DU CC`);autoanalyse.split('\n').forEach(l=>l.trim()&&L.push(`   ${l.trim()}`));L.push('');}
+  L.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  L.push(`Traçage généré via EDPC Manager · IDF`);
+  document.getElementById('preview-text').textContent=L.join('\n');
+  updateCompletude(); scheduleDraftSave();
+  renderManagerAxesChips(); renderFeedbackChips();
+}
+
+// =====================================================
+// COMPLÉTUDE
+// =====================================================
+function updateCompletude() {
+  const checks=[!!v('f-crc'),!!v('f-prenom'),!!v('f-manager'),!!v('f-date-edpc'),!!v('f-periode'),
+    !!v('f-priorites'),!!v('f-autoanalyse'),!!v('f-pac-action'),!!v('f-feedback'),!!v('f-axe')];
+  const pct=Math.round(checks.filter(Boolean).length/checks.length*100);
+  const fill=document.getElementById('completude-fill'), pctEl=document.getElementById('completude-pct');
+  fill.style.width=pct+'%'; pctEl.textContent=pct+'%';
+  const col=pct<40?'#9a3412':pct<75?'#92400e':'#166534';
+  fill.style.background=col; pctEl.style.color=col;
+}
+
+// =====================================================
+// COPY
+// =====================================================
+function copyText() {
+  navigator.clipboard.writeText(document.getElementById('preview-text').textContent).then(()=>{
+    const btn=document.getElementById('copy-btn');
+    btn.textContent='✅ Copié !'; btn.classList.add('copied');
+    setTimeout(()=>{btn.innerHTML='📋 Copier le traçage';btn.classList.remove('copied');},2200);
+    showToast('✅ Traçage copié dans le presse-papier');
+  });
+}
+
+// =====================================================
+// SAUVEGARDE
+// =====================================================
+function getFormData() {
+  return {
+    crc:v('f-crc'),manager:v('f-manager'),prenom:v('f-prenom'),
+    periode:v('f-periode'),annee:v('f-annee'),dateEdpc:v('f-date-edpc'),
+    priorites:v('f-priorites'),axe:v('f-axe'),autoanalyse:v('f-autoanalyse'),
+    feedback:v('f-feedback'),feedbackDate:v('f-feedback-date'),
+    pacAction:v('f-pac-action'),pacEngMgr:v('f-pac-eng-mgr'),
+    situation:currentSituation,
+  };
+}
+function setFormData(d) {
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
+  set('f-crc',d.crc); onCrcChange();
+  setTimeout(()=>{
+    set('f-manager',d.manager); onManagerChange();
+    setTimeout(()=>{
+      set('f-prenom',d.prenom); set('f-periode',d.periode); set('f-annee',d.annee||'2026');
+      set('f-date-edpc',d.dateEdpc); set('f-priorites',d.priorites); set('f-axe',d.axe);
+      set('f-autoanalyse',d.autoanalyse); set('f-feedback',d.feedback);
+      set('f-feedback-date',d.feedbackDate); set('f-pac-action',d.pacAction);
+      set('f-pac-eng-mgr',d.pacEngMgr);
+      if(d.situation) setSituation(d.situation);
+      renderAutoAnalyseChips(); renderManagerAxesChips(); generatePreview();
+    },50);
+  },50);
+}
+function scheduleDraftSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer=setTimeout(()=>{
+    try{localStorage.setItem('edpc_draft',JSON.stringify(getFormData()));setSaveIndicator(true);}catch(e){}
+  },1500);
+}
+function loadDraft() {
+  try{const raw=localStorage.getItem('edpc_draft');if(!raw)return;setFormData(JSON.parse(raw));setSaveIndicator(true);}catch(e){}
+}
+function setSaveIndicator(saved) {
+  const el=document.getElementById('save-indicator'),lbl=document.getElementById('save-label');
+  el.classList.toggle('saved',saved); lbl.textContent=saved?'Brouillon sauvegardé':'Non sauvegardé';
+}
+function saveTracage() {
+  const prenom=v('f-prenom'),crc=v('f-crc');
+  if(!prenom&&!crc){showToast('⚠️ Renseignez au moins le CRC et le conseiller');return;}
+  const tracage={
+    id:Date.now(), date:new Date().toLocaleDateString('fr-FR'),
+    month:new Date().toISOString().slice(0,7),
+    prenom:v('f-prenom')||'—', prenomCourt:getPrenom(), crc:crc||'—',
+    manager:v('f-manager')||'—', periode:v('f-periode')?`${v('f-periode')} ${v('f-annee')}`:'—',
+    situation:currentSituation, text:document.getElementById('preview-text').textContent,
+    data:getFormData(),
+  };
+  try{
+    const hist=JSON.parse(localStorage.getItem('edpc_history')||'[]');
+    hist.unshift(tracage); if(hist.length>50)hist.splice(50);
+    localStorage.setItem('edpc_history',JSON.stringify(hist));
+    localStorage.removeItem('edpc_draft'); setSaveIndicator(false);
+    showToast('💾 Traçage sauvegardé'); renderHistorique();
+  }catch(e){showToast('❌ Erreur de sauvegarde');}
+}
+
+// =====================================================
+// HISTORIQUE
+// =====================================================
+function renderHistorique() {
+  const c=document.getElementById('hist-container'); if(!c) return;
+  try{
+    const hist=JSON.parse(localStorage.getItem('edpc_history')||'[]');
+    if(!hist.length){c.innerHTML=`<div class="hist-empty"><div class="hist-empty-icon">📂</div><p>Aucun traçage sauvegardé.</p></div>`;return;}
+    c.innerHTML=''; const list=document.createElement('div'); list.className='hist-list';
+    hist.forEach(item=>{
+      const sc=item.situation==='progression'?'sit-tag-prog':item.situation==='stagnation'?'sit-tag-stag':item.situation==='non-atteinte'?'sit-tag-non':'sit-tag-none';
+      const sl=item.situation==='progression'?'✅ Progression':item.situation==='stagnation'?'⚠️ Stagnation':item.situation==='non-atteinte'?'🔴 Non atteint':'—';
+      const div=document.createElement('div'); div.className='hist-item';
+      div.innerHTML=`<div class="hist-item-info"><div class="hist-item-name">${item.prenom} <span style="color:var(--text-muted);font-weight:400">· CRC ${item.crc}</span></div><div class="hist-item-meta">Le ${item.date} · ${item.periode} · Manager : ${item.manager}</div></div><span class="hist-item-sit ${sc}">${sl}</span><div class="hist-actions"><button class="hist-btn next" onclick="loadEdpcSuivant(${item.id})">🔄 EDPC suivant</button><button class="hist-btn" onclick="reloadTracage(${item.id})">📂 Recharger</button><button class="hist-btn" onclick="copyHistItem(${item.id})">📋 Copier</button><button class="hist-btn danger" onclick="deleteHistItem(${item.id})">✕</button></div>`;
+      list.appendChild(div);
+    });
+    c.appendChild(list);
+  }catch(e){}
+}
+function getHistItem(id){const h=JSON.parse(localStorage.getItem('edpc_history')||'[]');return h.find(x=>x.id===id);}
+function copyHistItem(id){const i=getHistItem(id);if(!i)return;navigator.clipboard.writeText(i.text).then(()=>showToast('📋 Copié !'));}
+function reloadTracage(id){const i=getHistItem(id);if(!i||!i.data)return;setFormData(i.data);switchTab('generateur',document.querySelector('.tab-btn'));showToast('📂 Traçage rechargé');}
+function deleteHistItem(id){
+  try{let h=JSON.parse(localStorage.getItem('edpc_history')||'[]');h=h.filter(x=>x.id!==id);localStorage.setItem('edpc_history',JSON.stringify(h));renderHistorique();showToast('🗑️ Supprimé');}catch(e){}
+}
+function loadEdpcSuivant(id){
+  const item=getHistItem(id); if(!item||!item.data)return;
+  const next={...item.data};
+  ['priorites','axe','autoanalyse','feedback','feedbackDate','dateEdpc','pacAction','pacInd','pacDate','pacEngCC','pacEngMgr'].forEach(k=>{next[k]='';});
+  next.dateEdpc=new Date().toISOString().split('T')[0];
+  if(item.data.pacInd)next.priorites=item.data.pacInd;
+  next.situation=null; setFormData(next);
+  if(item.data.feedback){setTimeout(()=>{const el=document.getElementById('f-axe');if(el){el.value=`[Rappel ${item.periode}] ${item.data.feedback.split('\n')[0]}`;el.dispatchEvent(new Event('input'));}},200);}
+  switchTab('generateur',document.querySelector('.tab-btn'));
+  showToast(`🔄 EDPC suivant préparé pour ${item.prenomCourt||item.prenom}`,3000);
+}
+
+// =====================================================
+// SUIVI EDPC — ACCÈS PAR CODE
+// =====================================================
+function renderSuiviGate() {
+  const gate=document.getElementById('suivi-gate'); if(!gate) return;
+  gate.innerHTML=`
+    <div class="access-gate">
+      <div style="font-size:32px;margin-bottom:12px">🔒</div>
+      <h2>Accès sécurisé</h2>
+      <p>Entrez votre code d'accès pour consulter le tableau de suivi de votre équipe.</p>
+      <input type="password" id="access-input" placeholder="••••" maxlength="12"
+        onkeydown="if(event.key==='Enter')checkAccess()" autocomplete="off">
+      <button class="btn-primary accent" style="width:100%;justify-content:center" onclick="checkAccess()">Accéder →</button>
+      <div class="error" id="access-error"></div>
+      <div class="access-info">
+        <strong>Comment obtenir votre code ?</strong><br>
+        Contactez votre responsable IDF.<br><br>
+        <strong>Code superviseur (vue globale) :</strong> disponible auprès du CODIR.
+      </div>
+    </div>`;
+}
+
+function checkAccess() {
+  const input=document.getElementById('access-input')?.value?.trim();
+  const err=document.getElementById('access-error');
+  if(!input){err.textContent='Veuillez entrer un code.';return;}
+  // Chercher le code parmi tous les managers
+  let found=null;
+  Object.entries(ACCESS_CODES).forEach(([name,code])=>{
+    if(code===input.toUpperCase()) found=name;
+  });
+  if(!found){err.textContent='Code incorrect. Veuillez réessayer.';return;}
+  currentAccessRole=found==='admin'?'admin':`manager:${found}`;
+  renderDashboard();
+}
+
+function renderDashboard() {
+  const gate=document.getElementById('suivi-gate'); if(!gate) return;
+  if(!currentAccessRole){renderSuiviGate();return;}
+
+  let hist=[];
+  try{hist=JSON.parse(localStorage.getItem('edpc_history')||'[]');}catch(e){}
+
+  // Index EDPC : manager → conseiller → [mois]
+  const done={};
+  hist.forEach(h=>{
+    if(!h.manager||!h.prenom)return;
+    if(!done[h.manager])done[h.manager]={};
+    if(!done[h.manager][h.prenom])done[h.manager][h.prenom]=[];
+    if(h.month)done[h.manager][h.prenom].push(h.month);
+  });
+
+  const isAdmin=currentAccessRole==='admin';
+  const mgrFilter=isAdmin?null:currentAccessRole.replace('manager:','');
+
+  // Navigation mois
+  const [y,m]=dashMonth.split('-');
+  const monthLabel=new Date(parseInt(y),parseInt(m)-1,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+
+  gate.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+      <div style="font-family:'DM Serif Display',serif;font-size:20px">
+        ${isAdmin?'📊 Vue globale — Tous les managers':'📊 Mon tableau de suivi'}
+        ${isAdmin?'<span style="font-size:12px;font-weight:400;color:var(--text-muted);margin-left:8px">Mode superviseur</span>':''}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="month-nav">
+          <button onclick="changeMonth(-1)">◀</button>
+          <span>${monthLabel}</span>
+          <button onclick="changeMonth(1)">▶</button>
+        </div>
+        <button class="btn-secondary" style="font-size:12px;padding:6px 12px" onclick="currentAccessRole=null;renderSuiviGate()">🔒 Verrouiller</button>
+      </div>
+    </div>
+    <div id="dash-grid-container"></div>`;
+
+  const container=document.getElementById('dash-grid-container');
+  const grid=document.createElement('div'); grid.className='dash-grid';
+
+  // Légende
+  const legend=document.createElement('div');
+  legend.style.cssText='display:flex;gap:16px;margin-bottom:12px;font-size:12px;color:var(--text-muted);align-items:center;flex-wrap:wrap;grid-column:1/-1';
+  legend.innerHTML=`<span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block"></span>2 EDPC réalisés</span><span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span>1 EDPC réalisé</span><span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#e2ddd6;display:inline-block"></span>À réaliser</span>`;
+
+  let rendered=0;
+  Object.entries(TEAMS).forEach(([crc,managers])=>{
+    Object.entries(managers).forEach(([mgr,conseillers])=>{
+      if(!isAdmin && mgr.toLowerCase()!==mgrFilter.toLowerCase())return;
+      const mgrDone=done[mgr]||{};
+      let realized=0;
+      conseillers.forEach(cc=>{
+        const cnt=(mgrDone[cc]||[]).filter(mo=>mo===dashMonth).length;
+        realized+=Math.min(cnt,2);
+      });
+      const total=conseillers.length*2;
+      const pct=total>0?Math.round(realized/total*100):0;
+      const barColor=pct<50?'#ef4444':pct<85?'#f59e0b':'#22c55e';
+      const crcClass=crc==='GO'?'hdr-go':crc==='PGE'?'hdr-pge':'hdr-lst';
+      const ccRows=conseillers.map(cc=>{
+        const cnt=(mgrDone[cc]||[]).filter(mo=>mo===dashMonth).length;
+        const d1=cnt>=1?'done':'',d2=cnt>=2?'done':cnt>=1?'partial':'';
+        return `<div class="dash-cc-row"><span class="dash-cc-name">${cc}</span><div class="dash-cc-dots"><span class="dot ${d1}" title="EDPC 1"></span><span class="dot ${d2}" title="EDPC 2"></span></div></div>`;
+      }).join('');
+      const card=document.createElement('div'); card.className='dash-card';
+      card.innerHTML=`<div class="dash-card-header"><span class="dash-card-name">${mgr}</span><span class="hdr-badge ${crcClass}">${crc}</span></div><div class="dash-progress-wrap"><div class="dash-progress-fill" style="width:${pct}%;background:${barColor}"></div></div><div class="dash-stats-row"><span>${realized}/${total} EDPC</span><span style="font-weight:700;color:${barColor}">${pct}%</span></div><div class="dash-cc-list">${ccRows}</div>`;
+      grid.appendChild(card); rendered++;
+    });
+  });
+
+  if(!rendered){
+    container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📊</div><p>Aucune donnée à afficher.</p></div>';
+  } else {
+    // Insert legend as first grid item
+    grid.insertBefore(legend,grid.firstChild);
+    container.appendChild(grid);
+  }
+}
+
+function changeMonth(delta) {
+  const [y,m]=dashMonth.split('-');
+  const d=new Date(parseInt(y),parseInt(m)-1+delta,1);
+  dashMonth=d.toISOString().slice(0,7);
+  renderDashboard();
+}
+
+// =====================================================
+// RESET / TABS
+// =====================================================
+function resetForm() {
+  ['f-crc','f-prenom','f-manager','f-periode','f-priorites','f-axe','f-autoanalyse',
+   'f-feedback','f-feedback-date','f-pac-action','f-pac-eng-mgr'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('f-annee').value='2026';
+  document.getElementById('f-date-edpc').value='';
+  document.getElementById('f-manager').innerHTML='<option value="">— Choisir d\'abord le CRC —</option>';
+  document.getElementById('f-prenom').innerHTML='<option value="">— Choisir d\'abord le manager —</option>';
+  currentSituation=null;
+  document.querySelectorAll('.sit-btn').forEach(b=>b.classList.remove('s-prog','s-stag','s-non'));
+  renderFeedbackChips(); renderManagerAxesChips(); renderAutoAnalyseChips();
+  setSaveIndicator(false); try{localStorage.removeItem('edpc_draft');}catch(e){}
+  generatePreview(); showToast('↺ Formulaire réinitialisé');
+}
+function switchTab(name,btn) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const b=btn||document.querySelector('.tab-btn'); if(b)b.classList.add('active');
+  if(name==='historique')renderHistorique();
+  if(name==='suivi'){if(!currentAccessRole)renderSuiviGate();else renderDashboard();}
+}
+
+// =====================================================
+// INIT
+// =====================================================
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('f-date-edpc').value=new Date().toISOString().split('T')[0];
+  document.addEventListener('input',generatePreview);
+  renderSuiviGate();
+  renderLibrary();
+  generatePreview();
+});
+</script>
+</body>
+</html>
