@@ -1,0 +1,3049 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDPC Manager · IDF</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2efe9;--surface:#fff;--surface2:#f8f6f2;--border:#e2ddd6;--text:#18160f;--text-muted:#78726a;--accent:#1d4ed8;--accent-light:#eff4ff;--go:#166534;--go-light:#dcfce7;--pge:#6b21a8;--pge-light:#f3e8ff;--lst:#9a3412;--lst-light:#ffedd5;--success:#166534;--radius:12px;--radius-sm:8px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.06);--shadow-lg:0 8px 32px rgba(0,0,0,.12)}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6}
+
+/* ── SPLASH ── */
+#splash{position:fixed;inset:0;z-index:1000;background:#18160f;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s ease,transform .5s ease}
+#splash.hidden{opacity:0;pointer-events:none;transform:scale(1.02)}
+.splash-eyebrow{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,.4);margin-bottom:24px;animation:fadeUp .6s ease both}
+.splash-logo{display:flex;align-items:center;gap:16px;margin-bottom:16px;animation:fadeUp .6s ease .1s both}
+.splash-icon{width:64px;height:64px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 0 40px rgba(29,78,216,.4)}
+.splash-title{font-family:'DM Serif Display',serif;font-size:48px;color:#fff;letter-spacing:-1px;line-height:1}
+.splash-title span{color:#60a5fa}
+.splash-sub{font-size:15px;color:rgba(255,255,255,.45);margin-bottom:40px;letter-spacing:.3px;animation:fadeUp .6s ease .2s both}
+
+/* CRC selector on splash */
+.splash-crc-label{font-size:12px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;animation:fadeUp .6s ease .25s both}
+.splash-crc-row{display:flex;gap:14px;margin-bottom:40px;animation:fadeUp .6s ease .3s both}
+.splash-crc-btn{padding:12px 32px;border-radius:30px;font-size:15px;font-weight:700;letter-spacing:1px;border:2px solid;background:transparent;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.splash-crc-btn.sb-go {border-color:#4ade80;color:#4ade80}
+.splash-crc-btn.sb-pge{border-color:#c084fc;color:#c084fc}
+.splash-crc-btn.sb-lst{border-color:#fb923c;color:#fb923c}
+.splash-crc-btn.sb-go:hover {background:rgba(74,222,128,.15);transform:translateY(-2px);box-shadow:0 6px 20px rgba(74,222,128,.2)}
+.splash-crc-btn.sb-pge:hover{background:rgba(192,132,252,.15);transform:translateY(-2px);box-shadow:0 6px 20px rgba(192,132,252,.2)}
+.splash-crc-btn.sb-lst:hover{background:rgba(251,146,60,.15);transform:translateY(-2px);box-shadow:0 6px 20px rgba(251,146,60,.2)}
+.splash-crc-btn.selected.sb-go {background:rgba(74,222,128,.2);box-shadow:0 0 0 3px rgba(74,222,128,.3)}
+.splash-crc-btn.selected.sb-pge{background:rgba(192,132,252,.2);box-shadow:0 0 0 3px rgba(192,132,252,.3)}
+.splash-crc-btn.selected.sb-lst{background:rgba(251,146,60,.2);box-shadow:0 0 0 3px rgba(251,146,60,.3)}
+
+.splash-demo{background:none;border:1.5px solid rgba(255,255,255,.3);color:rgba(255,255,255,.7);padding:10px 28px;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;margin-top:12px;animation:fadeUp .6s ease .4s both}
+.splash-demo:hover{border-color:#60a5fa;color:#60a5fa}
+.splash-stats{display:flex;gap:40px;margin-top:40px;animation:fadeUp .6s ease .45s both}
+.splash-stat{text-align:center}.splash-stat-num{font-family:'DM Serif Display',serif;font-size:28px;color:#fff;line-height:1}
+.splash-stat-lbl{font-size:11px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── APP ── */
+#app{display:none}#app.visible{display:block}
+.demo-banner{background:linear-gradient(90deg,#7c3aed,#1d4ed8);padding:8px 20px;text-align:center;font-size:12px;font-weight:600;color:#fff;letter-spacing:.3px;display:none}
+.demo-banner.visible{display:block}
+.app-header{background:#18160f;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.06)}
+.header-brand{display:flex;align-items:center;gap:10px}
+.header-icon{width:32px;height:32px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.header-name{font-family:'DM Serif Display',serif;font-size:17px;color:#fff;letter-spacing:-.3px}.header-name span{color:#60a5fa}
+.header-right{display:flex;align-items:center;gap:10px}
+.hdr-badge{padding:3px 10px;border-radius:16px;font-size:11px;font-weight:700;letter-spacing:.5px}
+.hdr-go{background:var(--go-light);color:var(--go)}.hdr-pge{background:var(--pge-light);color:var(--pge)}.hdr-lst{background:var(--lst-light);color:var(--lst)}
+.save-indicator{font-size:11px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:5px;transition:color .3s}.save-indicator.saved{color:#4ade80}
+.save-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.version-badge{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.5px;padding:3px 8px;border:1px solid rgba(255,255,255,.15);border-radius:10px;white-space:nowrap}
+.refresh-btn{background:none;border:1.5px solid rgba(255,255,255,.2);border-radius:7px;padding:5px 10px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}
+.refresh-btn:hover{border-color:#60a5fa;color:#60a5fa;background:rgba(96,165,250,.1)}
+
+.container{max-width:980px;margin:0 auto;padding:28px 20px 60px}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px;box-shadow:var(--shadow)}
+.tab-btn{flex:1;background:none;border:none;padding:9px 12px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
+.tab-btn.active{background:var(--text);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15)}.tab-btn:not(.active):hover{color:var(--text);background:var(--surface2)}
+.tab-panel{display:none}.tab-panel.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card-title{font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:10px}
+.card-title .icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+
+/* ── FORM ── */
+.form-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted)}
+.form-group input,.form-group select,.form-group textarea{padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--text);background:var(--surface2);transition:border .15s,box-shadow .15s;outline:none}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(29,78,216,.08)}
+textarea{resize:vertical;min-height:80px}
+
+/* ── PAC ── */
+.pac-single{background:var(--surface2);border:1.5px solid var(--accent);border-radius:var(--radius);padding:18px 16px 14px;position:relative}
+.pac-single-label{position:absolute;top:-10px;left:12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);background:var(--surface);padding:1px 8px;border-radius:4px;border:1px solid var(--accent)}
+.pac-action-area{margin-bottom:10px}.pac-action-area label{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);display:block;margin-bottom:4px}.pac-action-area textarea{width:100%}
+
+/* ── LIBRARY ── */
+.lib-section{margin-bottom:16px}
+.lib-section-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.lib-hint{font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:#c0b8b0}
+.lib-grid{display:flex;flex-wrap:wrap;gap:7px}
+.lib-chip{padding:7px 13px;border-radius:var(--radius-sm);font-size:12.5px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;color:var(--text);text-align:left;line-height:1.4;white-space:normal;max-width:440px}
+.lib-chip:hover{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}.lib-chip.selected{border-color:var(--accent);background:var(--accent-light);color:var(--accent);font-weight:600}
+/* CCX chip style */
+.lib-chip.ccx{border-color:#7c3aed;background:#f5f3ff;color:#6d28d9}
+.lib-chip.ccx:hover{border-color:#6d28d9;background:#ede9fe;color:#5b21b6}
+
+/* ── UNDO BUTTON ── */
+/* ── TEXTAREA EXPAND MODAL ── */
+.expand-btn{position:absolute;top:8px;right:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:6px;padding:4px 9px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .15s;z-index:3;opacity:.7}
+.expand-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);opacity:1}
+.expand-modal-overlay{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;animation:fadeIn .15s ease}
+.expand-modal{background:var(--surface);border-radius:var(--radius);padding:0;width:90vw;max-width:860px;height:80vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.expand-modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.expand-modal-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)}
+.expand-modal-close{background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .15s}
+.expand-modal-close:hover{border-color:var(--accent);color:var(--accent)}
+.expand-modal-textarea{flex:1;width:100%;padding:20px;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.8;color:var(--text);border:none;outline:none;resize:none;background:var(--surface);border-radius:0}
+.expand-modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
+
+/* Ajuster field-wrap pour accommoder le bouton expand en haut */
+.field-wrap textarea{padding-top:36px}
+
+/* ── COPY SECTION BUTTON ── */
+.copy-section-btn{position:absolute;top:8px;right:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:6px;padding:4px 10px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .15s;opacity:.75;z-index:2;display:flex;align-items:center;gap:4px}
+.copy-section-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);opacity:1}
+.field-wrap{position:relative}
+.undo-btn{position:absolute;bottom:8px;right:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:6px;padding:4px 10px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;opacity:.75;z-index:2}
+.undo-btn:hover{border-color:#b91c1c;color:#991b1b;background:#fef2f2;opacity:1}
+.field-wrap textarea{padding-bottom:38px;width:100%}
+
+/* ── SITUATION ── */
+.situation-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.sit-btn{padding:7px 16px;border-radius:24px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text-muted);transition:all .15s}
+.sit-btn:hover{border-color:var(--accent);color:var(--accent)}.sit-btn.s-prog{border-color:var(--go);background:var(--go-light);color:var(--go)}.sit-btn.s-stag{border-color:#b45309;background:#fffbeb;color:#92400e}.sit-btn.s-non{border-color:#b91c1c;background:#fef2f2;color:#991b1b}
+
+/* ── INCOMPLETE INDICATOR ── */
+.card-title .required-dot{width:10px;height:10px;border-radius:50%;background:#ef4444;margin-left:auto;flex-shrink:0;display:none}
+.card.incomplete .card-title .required-dot{display:block}
+.card.incomplete{border-color:#fca5a5}
+/* ── BRIQUE CONTINUITÉ EDPC SUIVANT ── */
+.continuite-card{background:#f0f9ff;border:2px solid #0891b2;border-radius:var(--radius);padding:20px;margin-bottom:16px;display:none}
+.continuite-card.visible{display:block;animation:fadeIn .3s ease}
+.continuite-header{font-family:'DM Serif Display',serif;font-size:15px;color:#0c4a6e;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.continuite-periode{font-size:11px;font-weight:700;background:#0891b2;color:#fff;padding:2px 8px;border-radius:10px}
+.continuite-recap{background:#fff;border:1px solid #bae6fd;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#0c4a6e;margin:12px 0;line-height:1.8}
+.continuite-section{margin-bottom:14px}
+.continuite-section-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #bae6fd}
+.continuite-section-title.green{color:#15803d;border-color:#bbf7d0}
+.continuite-section-title.orange{color:#92400e;border-color:#fde68a}
+.continuite-section-title.red{color:#991b1b;border-color:#fca5a5}
+.continuite-section-title.blue{color:#1e40af;border-color:#bfdbfe}
+.continuite-chips{display:flex;flex-wrap:wrap;gap:6px}
+.continuite-chip{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;border:1.5px solid}
+.continuite-chip.green{background:#dcfce7;border-color:#86efac;color:#15803d}
+.continuite-chip.green:hover,.continuite-chip.green.sel{background:#22c55e;border-color:#16a34a;color:#fff}
+.continuite-chip.orange{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.continuite-chip.orange:hover,.continuite-chip.orange.sel{background:#f59e0b;border-color:#d97706;color:#fff}
+.continuite-chip.red{background:#fef2f2;border-color:#fca5a5;color:#991b1b}
+.continuite-chip.red:hover,.continuite-chip.red.sel{background:#ef4444;border-color:#dc2626;color:#fff}
+.continuite-chip.blue{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
+.continuite-chip.blue:hover,.continuite-chip.blue.sel{background:#3b82f6;border-color:#2563eb;color:#fff}
+.continuite-validate{background:#0891b2;color:#fff;border:none;padding:9px 20px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-top:14px;transition:all .15s}
+.continuite-validate:hover{background:#0e7490}
+.continuite-preview{font-size:12px;color:#0c4a6e;font-style:italic;margin-top:10px;min-height:18px}
+
+.completude-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 22px;margin-bottom:16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px}
+.completude-label{font-size:11.5px;font-weight:600;color:var(--text-muted);white-space:nowrap}
+.completude-track{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.completude-fill{height:100%;border-radius:4px;background:var(--accent);transition:width .35s,background .35s}
+.completude-pct{font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;min-width:34px;text-align:right}
+
+/* ── POPUP SAISIE % ── */
+.pct-popup-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center}
+.pct-popup{background:var(--surface);border:1.5px solid var(--accent);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow-lg);min-width:300px;max-width:420px;width:90%}
+.pct-popup-label{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.pct-popup-hint{font-size:11px;color:var(--text-muted);margin-bottom:12px;font-style:italic}
+.pct-popup-row{display:flex;gap:8px;align-items:center}
+.pct-popup-input{flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:16px;font-weight:700;color:var(--accent);background:var(--accent-light);outline:none;text-align:center}
+.pct-popup-input:focus{border-color:var(--accent)}
+.pct-popup-ok{background:var(--accent);color:#fff;border:none;padding:10px 18px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+.pct-popup-ok:hover{background:#1a44c0}
+.pct-popup-skip{background:none;color:var(--text-muted);border:1.5px solid var(--border);padding:9px 14px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer}
+.pct-popup-skip:hover{border-color:var(--text-muted);color:var(--text)}
+.preview-box{background:#fafafa;border:1.5px dashed var(--border);border-radius:var(--radius);padding:18px 22px;margin-top:4px;min-height:60px}
+.preview-box pre{font-family:'DM Sans',sans-serif;font-size:13px;white-space:pre-wrap;word-break:break-word;color:var(--text);line-height:1.8}
+.preview-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px}
+
+/* ── BUTTONS ── */
+.btn-primary{background:var(--text);color:#fff;border:none;padding:10px 22px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn-primary:hover{background:#2d2a20}.btn-primary.copied{background:var(--success)}.btn-primary.accent{background:var(--accent)}.btn-primary.accent:hover{background:#1a44c0}.btn-primary.purple{background:#7c3aed}.btn-primary.purple:hover{background:#6d28d9}
+.btn-secondary{background:none;color:var(--text-muted);border:1.5px solid var(--border);padding:9px 18px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn-secondary:hover{border-color:var(--text-muted);color:var(--text)}
+.actions-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px}
+
+/* ── ALERT ── */
+.alert{background:var(--accent-light);border-left:3px solid var(--accent);border-radius:8px;padding:11px 15px;font-size:13px;color:#1e40af;margin-bottom:16px}
+
+/* ── HISTORIQUE ── */
+.hist-empty{text-align:center;padding:60px 20px;color:var(--text-muted)}.hist-empty-icon{font-size:40px;margin-bottom:12px}
+.hist-list{display:flex;flex-direction:column;gap:10px}
+.hist-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hist-item-info{flex:1;min-width:180px}.hist-item-name{font-weight:600;font-size:14px}.hist-item-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+.hist-item-sit{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;flex-shrink:0}
+.sit-tag-prog{background:var(--go-light);color:var(--go)}.sit-tag-stag{background:#fffbeb;color:#92400e}.sit-tag-non{background:#fef2f2;color:#991b1b}.sit-tag-none{background:var(--surface2);color:var(--text-muted)}
+.hist-actions{display:flex;gap:6px;flex-wrap:wrap}
+.hist-btn{background:none;border:1.5px solid var(--border);border-radius:7px;padding:5px 11px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-muted);transition:all .15s}
+.hist-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}.hist-btn.danger:hover{border-color:#b91c1c;color:#991b1b;background:#fef2f2}.hist-btn.next{border-color:#7c3aed;color:#7c3aed;background:#f5f3ff}.hist-btn.next:hover{background:#ede9fe}
+
+/* ── ACCESS GATE ── */
+.access-gate{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:40px;max-width:440px;margin:40px auto;box-shadow:var(--shadow-lg);text-align:center}
+.access-gate h2{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:8px}
+.access-gate p{color:var(--text-muted);font-size:13px;margin-bottom:24px}
+.access-gate input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;text-align:center;letter-spacing:4px;outline:none;margin-bottom:12px;background:var(--surface2)}
+.access-gate input:focus{border-color:var(--accent);background:#fff}
+.access-gate .error{color:#b91c1c;font-size:12px;margin-top:6px;min-height:18px}
+.access-info{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:12px;color:var(--text-muted);margin-top:16px;text-align:left}
+.access-info strong{color:var(--text)}
+
+/* ── CULTURE VENTE CARD ── */
+.culture-vente-card{background:#fefce8;border:1.5px solid #fde047;border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
+.culture-vente-title{font-size:13px;font-weight:700;color:#713f12;margin-bottom:3px;display:flex;align-items:center;gap:6px}
+.culture-vente-sub{font-size:11.5px;color:#a16207;margin-bottom:12px;font-style:italic}
+.culture-vente-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-bottom:12px}
+.cv-technique{background:#fff;border:1px solid #fde047;border-radius:8px;padding:10px 12px}
+.cv-technique-name{font-size:12px;font-weight:600;color:#713f12;margin-bottom:5px}
+.cv-technique-chips{display:flex;flex-wrap:wrap;gap:4px}
+.cv-chip{padding:3px 9px;border-radius:12px;font-size:11.5px;font-weight:600;border:1.5px solid #fde047;background:#fefce8;color:#a16207;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif}
+.cv-chip:hover,.cv-chip.selected{background:#eab308;border-color:#ca8a04;color:#fff}
+.cv-preview{font-size:12px;color:#a16207;font-style:italic;margin:8px 0;min-height:18px}
+.cv-insert-btn{background:#eab308;color:#fff;border:none;padding:7px 16px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+.cv-insert-btn:hover{background:#ca8a04}
+
+/* ── SLOT SUGGESTIONS IN POPUP ── */
+.slot-suggestions{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 8px}
+.slot-chip{padding:4px 10px;border-radius:14px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text);transition:all .12s;white-space:nowrap}
+.slot-chip:hover{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+/* ── ENVOI PAR MAIL — MODAL CENTRÉE ── */
+.mail-modal-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;animation:fadeIn .15s ease}
+.mail-modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 30px;max-width:480px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.25);max-height:80vh;display:flex;flex-direction:column}
+.mail-modal h3{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:6px;flex-shrink:0}
+.mail-modal p{font-size:13px;color:var(--text-muted);margin-bottom:16px;flex-shrink:0}
+.mail-recipients{display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:260px;margin-bottom:18px;padding-right:4px}
+.mail-recipient{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .12s;user-select:none}
+.mail-recipient:hover{border-color:var(--accent);background:var(--accent-light)}
+.mail-recipient.checked{border-color:var(--accent);background:var(--accent-light)}
+.mail-recipient input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;cursor:pointer}
+.mail-recipient label{font-size:13px;color:var(--text);cursor:pointer;flex:1}
+.mail-modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;padding-top:4px;border-top:1px solid var(--border)}
+.mail-empty{font-size:13px;color:var(--text-muted);font-style:italic;padding:8px 0}
+/* Select all checkbox */
+.mail-select-all{display:flex;align-items:center;gap:8px;padding:6px 2px;margin-bottom:4px;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;flex-shrink:0}
+.mail-select-all input{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+/* ── AMBITION — BRIQUE DYNAMIQUE ── */
+.ambition-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.3px}
+.ambition-diag   {background:#eff4ff;color:#1d4ed8;border:1px solid #bfdbfe}
+.ambition-pac    {background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+.ambition-suivi  {background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+.ambition-feedback{background:#fdf4ff;color:#7c3aed;border:1px solid #e9d5ff}
+/* Transition apparition/disparition des briques */
+.card.brique-hidden{display:none}
+.card.brique-visible{display:block;animation:fadeIn .2s ease}
+/* ── PAC RESULTS PANEL ── */
+.pac-result-panel{background:#fff7ed;border:1.5px solid #f59e0b;border-radius:var(--radius);padding:14px 16px;margin:10px 0;display:none}
+.pac-result-panel.visible{display:block;animation:fadeIn .2s ease}
+.pac-result-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#92400e;margin-bottom:10px}
+.pac-result-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.pac-result-row .form-group label{font-size:10px}
+.pac-result-row input{font-size:13px;padding:7px 10px;text-align:center;font-weight:600}
+.pac-apply-btn{background:#f59e0b;color:#fff;border:none;padding:8px 18px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.pac-apply-btn:hover{background:#d97706}
+.pac-result-hint{font-size:11px;color:var(--text-muted);margin-top:6px;font-style:italic}
+
+/* ── FEEDBACK STAGING ZONE ── */
+.feedback-staging{background:#f8f6f2;border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin:12px 0;display:none}
+.feedback-staging.visible{display:block;animation:fadeIn .2s ease}
+.feedback-staging-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.feedback-staging-lines{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;min-height:36px}
+.feedback-staging-line{display:flex;align-items:flex-start;gap:8px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);line-height:1.5}
+.feedback-staging-line-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.tag-prog  {background:var(--green-light);color:var(--green)}
+.tag-stag  {background:#fffbeb;color:#92400e}
+.tag-non   {background:#fef2f2;color:#991b1b}
+.feedback-staging-empty{font-size:12.5px;color:var(--text-muted);font-style:italic;padding:4px 0}
+.feedback-staging-del{background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:14px;padding:0 4px;flex-shrink:0;margin-left:auto;transition:color .12s}
+.feedback-staging-del:hover{color:#991b1b}
+.feedback-validate-btn{background:var(--green);color:#fff;border:2px solid var(--green);padding:11px 24px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:8px;position:relative;z-index:10;box-shadow:0 2px 8px rgba(21,128,61,.25)}
+.feedback-validate-btn:hover{background:#15803d;border-color:#15803d;transform:translateY(-1px);box-shadow:0 4px 14px rgba(21,128,61,.35)}
+.feedback-validate-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+/* Boutons situation multi-sélection */
+.sit-btn.active-prog{border-color:var(--go)!important;background:var(--go-light)!important;color:var(--go)!important}
+.sit-btn.active-stag{border-color:#b45309!important;background:#fffbeb!important;color:#92400e!important}
+.sit-btn.active-non {border-color:#b91c1c!important;background:#fef2f2!important;color:#991b1b!important}
+
+/* ── FEEDBACK RESULTS PANEL ── */
+.feedback-result-panel{background:var(--accent-light);border:1.5px solid var(--accent);border-radius:var(--radius);padding:14px 16px;margin:10px 0;display:none}
+.feedback-result-panel.visible{display:block;animation:fadeIn .2s ease}
+.feedback-result-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);margin-bottom:10px}
+.feedback-result-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.feedback-result-row .form-group label{font-size:10px}
+.feedback-result-row input{font-size:13px;padding:7px 10px;text-align:center;font-weight:600}
+.feedback-apply-btn{background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.feedback-apply-btn:hover{background:#1a44c0}
+.feedback-result-hint{font-size:11px;color:var(--text-muted);margin-top:6px;font-style:italic}
+
+/* ── DASHBOARD ── */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:20px}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+.dash-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.dash-card-name{font-weight:600;font-size:14px}
+.dash-progress-wrap{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:8px 0}
+.dash-progress-fill{height:100%;border-radius:3px;transition:width .4s,background .4s}
+.dash-stats-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:8px}
+.dash-cc-list{display:flex;flex-direction:column;gap:3px;margin-top:8px}
+.dash-cc-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:4px 6px;border-radius:5px;background:var(--surface2)}
+.dash-cc-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dash-cc-dots{display:flex;gap:4px;flex-shrink:0;margin-left:8px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0}
+.dot.done{background:#22c55e}.dot.partial{background:#f59e0b}.dot.bonus{background:#a78bfa}
+.month-nav{display:flex;align-items:center;gap:10px}
+.month-nav button{background:none;border:1.5px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px;color:var(--text-muted);transition:all .15s}
+.month-nav button:hover{border-color:var(--accent);color:var(--accent)}
+.month-nav span{font-weight:600;font-size:13px;min-width:100px;text-align:center}
+/* Ambition badges in dashboard */
+.ambition-tag{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap}
+.ambition-tag.diag    {background:#dbeafe;color:#1d4ed8}
+.ambition-tag.pac     {background:#ffedd5;color:#c2410c}
+.ambition-tag.suivi   {background:#dcfce7;color:#15803d}
+.ambition-tag.feedback{background:#ede9fe;color:#7c3aed}
+.ambition-tag.warn    {background:#fef9c3;color:#a16207;border:1px solid #fde047}
+.dash-cc-ambitions{display:flex;gap:3px;flex-wrap:wrap;margin-top:3px}
+/* Bonus badge for >2 EDPC */
+.bonus-badge{display:inline-flex;align-items:center;gap:3px;background:#f5f3ff;color:#7c3aed;border:1px solid #c4b5fd;border-radius:10px;font-size:10px;font-weight:700;padding:1px 7px}
+
+/* ── BILAN ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+.stat-card .crc-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.stat-card .crc-rate{font-family:'DM Serif Display',serif;font-size:30px;line-height:1;margin-bottom:4px}
+.stat-card .crc-sub{font-size:11px;color:var(--text-muted)}
+.stat-go .crc-label,.stat-go .crc-rate{color:var(--go)}.stat-pge .crc-label,.stat-pge .crc-rate{color:var(--pge)}.stat-lst .crc-label,.stat-lst .crc-rate{color:var(--lst)}.stat-idf .crc-label,.stat-idf .crc-rate{color:var(--accent)}
+.progress-bar-wrap{margin-top:8px;height:4px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-bar{height:100%;border-radius:3px;transition:width .4s}
+.bar-go{background:var(--go)}.bar-pge{background:var(--pge)}.bar-lst{background:var(--lst)}.bar-idf{background:var(--accent)}
+.axe-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.axe-table th{background:var(--surface2);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);font-weight:700}
+.axe-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+.axe-table tr:last-child td{border-bottom:none}
+.pill-ok{background:var(--go-light);color:var(--go);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.pill-warn{background:var(--lst-light);color:var(--lst);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.pill-bad{background:#fef2f2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+
+/* ── TOAST & SCROLL TOP ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#18160f;color:#fff;padding:12px 22px;border-radius:50px;font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);transition:transform .3s ease,opacity .3s ease;opacity:0;pointer-events:none;z-index:999;display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.scroll-top{position:fixed;bottom:28px;right:24px;width:42px;height:42px;background:var(--accent);color:#fff;border:none;border-radius:50%;font-size:18px;cursor:pointer;box-shadow:var(--shadow-lg);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .2s;z-index:998}
+.scroll-top.visible{opacity:1;pointer-events:all}.scroll-top:hover{transform:translateY(-3px)}
+
+@media(max-width:640px){.container{padding:14px 12px 48px}.card{padding:18px 16px}.form-row{grid-template-columns:1fr}.splash-title{font-size:32px}.splash-crc-row{gap:10px}.splash-crc-btn{padding:10px 20px;font-size:13px}.tabs{flex-wrap:wrap}.tab-btn{flex:none;font-size:11px;padding:7px 10px}}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <p class="splash-eyebrow">Île-de-France · Qualité post-entretien</p>
+  <div class="splash-logo">
+    <div class="splash-icon">📊</div>
+    <div class="splash-title">EDPC <span>Manager</span></div>
+  </div>
+  <p class="splash-sub">Traçage normé · Bibliothèque de formules · Suivi des engagements</p>
+  <p class="splash-crc-label">Sélectionnez votre CRC pour accéder</p>
+  <div class="splash-crc-row">
+    <button class="splash-crc-btn sb-go"  onclick="selectCRC('GO',  this)">GO</button>
+    <button class="splash-crc-btn sb-pge" onclick="selectCRC('PGE', this)">PGE</button>
+    <button class="splash-crc-btn sb-lst" onclick="selectCRC('LST', this)">LST</button>
+  </div>
+  <button class="splash-demo" onclick="enterApp(true)">🎬 Mode démonstration</button>
+  <div class="splash-stats">
+    <div class="splash-stat"><div class="splash-stat-num">3</div><div class="splash-stat-lbl">CRC couverts</div></div>
+    <div class="splash-stat"><div class="splash-stat-num">85%</div><div class="splash-stat-lbl">Objectif qualité</div></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="demo-banner" id="demo-banner">🎬 MODE DÉMONSTRATION — Les saisies ne sont pas sauvegardées · <span style="opacity:.7;font-weight:400">Quitter : rechargez la page</span></div>
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="header-icon">📊</div>
+      <span class="header-name">EDPC <span>Manager</span></span>
+      <span class="version-badge" id="version-badge">v2026.05</span>
+    </div>
+    <div class="header-right">
+      <button class="refresh-btn" onclick="forceRefresh()">↻ Actualiser</button>
+      <span class="save-indicator" id="save-indicator"><span class="save-dot"></span><span id="save-label">Non sauvegardé</span></span>
+      <span class="hdr-badge" id="hdr-crc-badge">IDF</span>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('generateur',this)">✏️ Générateur</button>
+      <button class="tab-btn" onclick="switchTab('suivi',this)">📈 Suivi EDPC</button>
+      <button class="tab-btn" onclick="switchTab('historique',this)">🕓 Historique</button>
+      <button class="tab-btn" id="tab-bilan-btn" onclick="switchTab('bilan',this)">📊 Bilan CRC</button>
+      <button class="tab-btn" onclick="switchTab('guide',this)">📖 Guide</button>
+    </div>
+
+    <!-- GÉNÉRATEUR -->
+    <div id="tab-generateur" class="tab-panel active">
+      <div class="alert">💡 Renseignez les champs, sélectionnez vos formules ou rédigez librement — puis copiez le traçage en un clic.</div>
+      <div class="completude-bar">
+        <span class="completude-label">Complétude</span>
+        <div class="completude-track"><div class="completude-fill" id="completude-fill" style="width:0%"></div></div>
+        <span class="completude-pct" id="completude-pct">0%</span>
+      </div>
+
+      <!-- Identification : CRC masqué, manager + CC filtrés -->
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#eff4ff">👤</span>Identification</div>
+        <div class="form-row">
+          <div class="form-group"><label>Manager</label><select id="f-manager" onchange="onManagerChange()"><option value="">— Choisir le manager —</option></select></div>
+          <div class="form-group"><label>Conseiller (CC)</label><select id="f-prenom" onchange="onPrenomChange()"><option value="">— Choisir d'abord le manager —</option></select></div>
+          <div class="form-group"><label>Période couverte</label><select id="f-periode"><option value="">— Choisir —</option><option>T1</option><option>T2</option><option>T3</option><option>T4</option><option>Point RVI</option></select></div>
+          <div class="form-group"><label>Année</label><input type="number" id="f-annee" value="2026" min="2020" max="2099"></div>
+          <div class="form-group"><label>Date de l'EDPC</label><input type="date" id="f-date-edpc"></div>
+          <div class="form-group"><label>Semaine EDPC</label><input type="week" id="f-semaine-edpc" placeholder="S–2026"></div>
+          <div class="form-group"><label>Ambition EDPC</label><select id="f-ambition" onchange="onAmbitionChange()"><option value="">— Toutes les briques —</option><option value="diag">Analyse Globale / DIAG</option><option value="pac">Priorité / PAC</option><option value="suivi">Suivi des engagements</option><option value="feedback">Feedback</option></select></div>
+        </div>
+      </div>
+
+      <!-- Priorités -->
+      <div class="card" id="card-priorites">
+        <div class="card-title"><span class="icon" style="background:#dcfce7">🎯</span>Priorités identifiées<span class="required-dot"></span></div>
+        <!-- Formules types génériques — masquées si ambition sélectionnée -->
+        <div id="lib-priorites-section">
+          <div class="lib-section"><div class="lib-section-title">🎯 Formules types <span class="lib-hint">Sélection automatique → Analyse Globale</span></div><div class="lib-grid" id="lib-priorites"></div></div>
+        </div>
+
+        <!-- Sous-sections Conquête / Compétitivité / Engagement — visibles si ambition diag ou pac -->
+        <div id="lib-diag-sections" style="display:none">
+          <div class="lib-section" style="margin-top:12px">
+            <div class="lib-section-title" style="color:#1d4ed8">🔵 Conquête <span class="lib-hint">Nouveaux clients & développement</span></div>
+
+            <!-- BRIQUE CULTURE VENTE -->
+            <div class="culture-vente-card" id="culture-vente-card">
+              <div class="culture-vente-title">⭐ Culture Vente</div>
+              <div class="culture-vente-sub">Socle commun de techniques commerciales — évaluez la maîtrise de votre conseiller</div>
+              <div class="culture-vente-grid">
+                <div class="cv-technique">
+                  <div class="cv-technique-name">💡 Méthode BAC</div>
+                  <div class="cv-technique-chips">
+                    <button class="cv-chip" onclick="toggleCvChip(this,'BAC','acquis')">Acquis</button>
+                    <button class="cv-chip" onclick="toggleCvChip(this,'BAC','en cours de maîtrise')">En cours</button>
+                    <button class="cv-chip" onclick="toggleCvChip(this,'BAC','à renforcer')">À renforcer</button>
+                  </div>
+                </div>
+                <div class="cv-technique">
+                  <div class="cv-technique-name">🔄 Méthode AREF</div>
+                  <div class="cv-technique-chips">
+                    <button class="cv-chip" onclick="toggleCvChip(this,'AREF','acquis')">Acquis</button>
+                    <button class="cv-chip" onclick="toggleCvChip(this,'AREF','en cours de maîtrise')">En cours</button>
+                    <button class="cv-chip" onclick="toggleCvChip(this,'AREF','à renforcer')">À renforcer</button>
+                  </div>
+                </div>
+                <div class="cv-technique">
+                  <div class="cv-technique-name">🤝 Posture conseil & confiance</div>
+                  <div class="cv-technique-chips">
+                    <button class="cv-chip" onclick="toggleCvChip(this,'posture conseil et relation de confiance','acquise')">Acquise</button>
+                    <button class="cv-chip" onclick="toggleCvChip(this,'posture conseil et relation de confiance','en cours')">En cours</button>
+                    <button class="cv-chip" onclick="toggleCvChip(this,'posture conseil et relation de confiance','axe prioritaire')">Axe prioritaire</button>
+                  </div>
+                </div>
+                <div class="cv-technique">
+                  <div class="cv-technique-name">👂 Écoute & questionnement</div>
+                  <div class="cv-technique-chips">
+                    <button class="cv-chip" onclick="toggleCvChip(this,'écoute active et questionnement','acquis')">Acquis</button>
+                    <button class="cv-chip" onclick="toggleCvChip(this,'écoute active et questionnement','en développement')">En développement</button>
+                    <button class="cv-chip" onclick="toggleCvChip(this,'écoute active et questionnement','à renforcer')">À renforcer</button>
+                  </div>
+                </div>
+                <div class="cv-technique">
+                  <div class="cv-technique-name">🛡️ Traitement des objections</div>
+                  <div class="cv-technique-chips">
+                    <button class="cv-chip" onclick="toggleCvChip(this,'traitement des objections','maîtrisé')">Maîtrisé</button>
+                    <button class="cv-chip" onclick="toggleCvChip(this,'traitement des objections','en progression')">En progression</button>
+                    <button class="cv-chip" onclick="toggleCvChip(this,'traitement des objections','à travailler')">À travailler</button>
+                  </div>
+                </div>
+                <div class="cv-technique">
+                  <div class="cv-technique-name">🎯 Méthode SONCASE</div>
+                  <div class="cv-technique-chips">
+                    <button class="cv-chip" onclick="toggleCvChip(this,'SONCASE','acquis')">Acquis</button>
+                    <button class="cv-chip" onclick="toggleCvChip(this,'SONCASE','en cours de maîtrise')">En cours</button>
+                    <button class="cv-chip" onclick="toggleCvChip(this,'SONCASE','à renforcer')">À renforcer</button>
+                  </div>
+                </div>
+              </div>
+              <div class="cv-preview" id="cv-preview">Sélectionnez les techniques ci-dessus pour composer votre évaluation…</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+                <button class="cv-insert-btn" onclick="insertCultureVente()">✓ Insérer dans les priorités</button>
+                <button class="undo-btn" style="position:static;opacity:.75" onclick="resetCultureVente()" title="Réinitialiser les sélections">↩ Annuler</button>
+              </div>
+            </div>
+
+            <div class="lib-grid" id="lib-conquete"></div>
+          </div>
+          <div class="lib-section" style="margin-top:12px">
+            <div class="lib-section-title" style="color:#7c3aed">🟣 Compétitivité <span class="lib-hint">Offres & services additionnels</span></div>
+            <div class="lib-grid" id="lib-competitivite"></div>
+          </div>
+          <div class="lib-section" style="margin-top:12px">
+            <div class="lib-section-title" style="color:#15803d">🟢 Engagement <span class="lib-hint">Fidélisation & satisfaction client</span></div>
+            <div class="lib-grid" id="lib-engagement"></div>
+          </div>
+        </div>
+
+        <!-- Missionnement CCX -->
+        <div class="lib-section" style="margin-top:12px">
+          <div class="lib-section-title">⭐ Missionnement CCX <span class="lib-hint">Cliquez pour ajouter</span></div>
+          <div class="lib-grid" id="lib-ccx"></div>
+        </div>
+        <div class="form-group">
+          <label>Priorité(s) retenue(s)</label>
+          <div class="field-wrap">
+            <textarea id="f-priorites" placeholder="Sélectionnez ci-dessus ou rédigez librement…"></textarea>
+            <button class="expand-btn" onclick="expandTextarea('f-priorites','Priorités identifiées')" title="Agrandir">⛶</button>
+            <button class="undo-btn" onclick="undoLastLine('f-priorites','f-axe')" title="Annuler la dernière saisie">↩ Annuler</button>
+            <button class="copy-section-btn" style="bottom:38px" onclick="copySection('f-priorites',this)" title="Copier cette section">📋</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analyse Globale -->
+      <div class="card" id="card-axe">
+        <div class="card-title"><span class="icon" style="background:#fef2f2">🧭</span>Analyse Globale<span class="required-dot"></span></div>
+
+        <!-- Brique continuité EDPC suivant — visible uniquement après loadEdpcSuivant -->
+        <div class="continuite-card" id="continuite-card">
+          <div class="continuite-header">
+            🔄 Bilan de l'EDPC précédent
+            <span class="continuite-periode" id="continuite-periode-label"></span>
+          </div>
+          <div class="continuite-recap" id="continuite-recap"></div>
+          <div class="continuite-section">
+            <div class="continuite-section-title green">✅ Réussi — quelles priorités ont été atteintes ?</div>
+            <div class="continuite-chips" id="continuite-chips-reussi"></div>
+          </div>
+          <div class="continuite-section">
+            <div class="continuite-section-title orange">⚠️ Partiellement atteint — quelles priorités ont progressé sans être finalisées ?</div>
+            <div class="continuite-chips" id="continuite-chips-partiel"></div>
+          </div>
+          <div class="continuite-section">
+            <div class="continuite-section-title red">❌ Non atteint — quelles priorités restent à travailler ?</div>
+            <div class="continuite-chips" id="continuite-chips-nonatteint"></div>
+          </div>
+          <div class="continuite-section">
+            <div class="continuite-section-title blue">🎯 Décision pour cet EDPC</div>
+            <div class="continuite-chips" id="continuite-chips-decision"></div>
+          </div>
+          <div class="continuite-preview" id="continuite-preview"></div>
+          <button class="continuite-validate" onclick="validateContinuite()">✓ Insérer dans l'Analyse Globale</button>
+        </div>
+
+        <div class="lib-section"><div class="lib-section-title">Pré-rempli depuis les priorités <span class="lib-hint">Complétez les [X%] et ajustez librement</span></div><div class="lib-grid" id="lib-axes"></div>
+
+          <!-- Chip Culture Vente dans Analyse Globale — visible si ambition Feedback -->
+          <div id="axe-cv-wrap" style="display:none;margin-top:8px">
+            <button class="lib-chip" style="border-color:#eab308;color:#713f12;background:#fef9c3;font-weight:700" onclick="toggleAxeCultureVente()">
+              ⭐ Apport Culture Vente — sélectionnez les techniques observées
+            </button>
+          </div>
+        </div>
+
+        <!-- Panneau Culture Vente Analyse Globale — chips simples -->
+        <div id="axe-cv-panel" style="display:none;background:#fef9c3;border:2px solid #eab308;border-radius:12px;padding:14px 16px;margin:6px 0 10px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#92400e;margin-bottom:10px">⭐ Choisissez la technique observée dans l'analyse</div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px" id="axe-cv-chips-list"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Analyse Globale</label>
+          <div class="field-wrap">
+            <textarea id="f-axe" rows="4" placeholder="Se remplit automatiquement selon vos priorités — complétez les [X%]…"></textarea>
+            <button class="expand-btn" onclick="expandTextarea('f-axe','Analyse Globale')" title="Agrandir">⛶</button>
+            <button class="undo-btn" onclick="undoLastLine('f-axe',null)">↩ Annuler</button>
+            <button class="copy-section-btn" style="bottom:38px" onclick="copySection('f-axe',this)" title="Copier cette section">📋</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAC -->
+      <div class="card" id="card-pac">
+        <div class="card-title"><span class="icon" style="background:#fff7ed">📋</span>Plan d'Actions et de Coaching (PAC)<span class="required-dot"></span></div>
+        <div class="lib-section"><div class="lib-section-title">Actions types SMART <span class="lib-hint">Date cible et progression incluses dans la phrase — des champs apparaissent pour compléter les valeurs</span></div><div class="lib-grid" id="lib-pac"></div>
+
+          <!-- Chip Culture Vente spécial -->
+          <div style="margin-top:8px">
+            <button class="lib-chip" id="pac-cv-chip" style="border-color:#eab308;color:#713f12;background:#fef9c3;font-weight:700" onclick="togglePacCultureVente()">
+              ⭐ Apport Culture Vente — sélectionnez les techniques travaillées
+            </button>
+          </div>
+        </div>
+
+        <!-- Panneau Culture Vente PAC — chips simples par thème -->
+        <div id="pac-cv-panel" style="display:none;background:#fef9c3;border:2px solid #eab308;border-radius:12px;padding:14px 16px;margin:6px 0 10px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#92400e;margin-bottom:10px">⭐ Choisissez la technique à travailler dans le PAC</div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px" id="pac-cv-chips-list"></div>
+        </div>
+
+        <!-- Panneau saisie résultats PAC -->
+        <div class="pac-result-panel" id="pac-result-panel">
+          <div class="pac-result-title">📋 Complétez les valeurs — elles s'insèreront automatiquement dans l'action</div>
+          <div class="pac-result-row" id="pac-result-fields"></div>
+          <button class="pac-apply-btn" onclick="applyPacResults()">✓ Insérer dans le PAC</button>
+          <div class="pac-result-hint" id="pac-result-preview"></div>
+        </div>
+
+        <div class="pac-single">
+          <span class="pac-single-label">Action de coaching</span>
+          <div class="pac-action-area">
+            <label>Action définie</label>
+            <div class="field-wrap">
+              <textarea id="f-pac-action" rows="4" placeholder="Sélectionnez ci-dessus ou décrivez l'action…"></textarea>
+              <button class="expand-btn" onclick="expandTextarea('f-pac-action','Plan d'Actions')" title="Agrandir">⛶</button>
+              <button class="undo-btn" onclick="undoLastLine('f-pac-action',null)">↩ Annuler</button>
+              <button class="copy-section-btn" style="bottom:38px" onclick="copySection('f-pac-action',this)" title="Copier cette section">📋</button>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:10px">
+            <label>Engagement du manager</label>
+            <input type="text" id="f-pac-eng-mgr" placeholder="ex : coaching CP hebdo, double écoute avant le [date]…">
+          </div>
+        </div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="card" id="card-feedback">
+        <div class="card-title"><span class="icon" style="background:#eff4ff">🔁</span>Feedback manager<span class="required-dot"></span></div>
+        <div style="margin-bottom:14px">
+          <div class="lib-section-title" style="margin-bottom:6px;border-bottom:1px solid var(--border);padding-bottom:6px">Situation du CC — sélectionnez une catégorie</div>
+          <div class="situation-row">
+            <button class="sit-btn" id="sit-prog" onclick="selectFeedbackTab('progression',this)">✅ En progression</button>
+            <button class="sit-btn" id="sit-stag" onclick="selectFeedbackTab('stagnation',this)">⚠️ En stagnation</button>
+            <button class="sit-btn" id="sit-non"  onclick="selectFeedbackTab('non-atteinte',this)">🔴 Engagements non atteints</button>
+          </div>
+        </div>
+
+        <div class="lib-section"><div class="lib-section-title">Formules types <span class="lib-hint">Cliquez pour ajouter à la zone de préparation ci-dessous</span></div><div class="lib-grid" id="lib-feedback"></div></div>
+
+        <!-- Panneau saisie valeurs (champs contextuels) -->
+        <div class="feedback-result-panel" id="feedback-result-panel">
+          <div class="feedback-result-title">📊 Complétez les valeurs — prévisualisation en temps réel</div>
+          <div class="feedback-result-row" id="feedback-result-fields"></div>
+          <button class="feedback-apply-btn" onclick="applyFeedbackResults()">✓ Ajouter à la zone de préparation</button>
+          <div class="feedback-result-hint" id="feedback-result-preview"></div>
+        </div>
+
+        <!-- Zone de staging — composition du feedback avant insertion -->
+        <div class="feedback-staging" id="feedback-staging">
+          <div class="feedback-staging-title">
+            <span>📝 Feedback en cours de composition</span>
+            <button class="pct-popup-skip" style="font-size:11px;padding:3px 10px" onclick="clearFeedbackStaging()">Tout effacer</button>
+          </div>
+          <div class="feedback-staging-lines" id="feedback-staging-lines">
+            <div class="feedback-staging-empty">Sélectionnez des formules ci-dessus pour les voir apparaître ici…</div>
+          </div>
+          <!-- Bouton insérer — dans le staging, visible dès la 1ère sélection -->
+          <div id="feedback-validate-wrap" style="display:none;padding-top:14px;border-top:1px solid var(--border);margin-top:10px;position:relative;z-index:20">
+            <button class="feedback-validate-btn" id="feedback-validate-btn" onclick="validateFeedbackStaging()">
+              ✓ Insérer dans le feedback tracé
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:14px">
+          <label>Feedback tracé</label>
+          <div class="field-wrap">
+            <textarea id="f-feedback" placeholder="Composez votre feedback ci-dessus puis cliquez '✓ Insérer dans le feedback tracé'…"></textarea>
+            <button class="expand-btn" onclick="expandTextarea('f-feedback','Feedback manager')" title="Agrandir">⛶</button>
+            <button class="undo-btn" onclick="undoLastLine('f-feedback',null)">↩ Annuler</button>
+            <button class="copy-section-btn" style="bottom:38px" onclick="copySection('f-feedback',this)" title="Copier cette section">📋</button>
+          </div>
+        </div>
+          <div class="form-group"><label>Date du prochain EDPC</label><input type="date" id="f-feedback-date"></div>
+          <div class="form-group"><label>Semaine du prochain EDPC</label><input type="week" id="f-feedback-semaine"></div>
+        </div>
+        <div class="form-row" style="margin-top:8px">
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Email du manager — invitation agenda J-2 avant le prochain EDPC (optionnel)</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="email" id="f-email-manager" placeholder="prenom.nom@edf.fr — rempli automatiquement selon le manager sélectionné" style="flex:1">
+              <button class="btn-secondary" style="white-space:nowrap;padding:9px 14px;font-size:12px" onclick="genererRappelOutlook()" title="Créer un rappel J-2 dans l'agenda Outlook">📅 Invitation agenda</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto-analyse CC -->
+      <div class="card" id="card-autoanalyse">
+        <div class="card-title"><span class="icon" style="background:#f3e8ff">💬</span>Auto-analyse du CC<span class="required-dot"></span></div>
+        <div class="lib-section"><div class="lib-section-title">Formules types — personnalisées avec le prénom du CC <span class="lib-hint">Renseignez d'abord le conseiller</span></div><div class="lib-grid" id="lib-autoanalyse"></div></div>
+        <div class="form-group">
+          <label>Auto-analyse tracée</label>
+          <div class="field-wrap">
+            <textarea id="f-autoanalyse" placeholder="Sélectionnez ci-dessus ou rédigez librement…"></textarea>
+            <button class="expand-btn" onclick="expandTextarea('f-autoanalyse','Auto-analyse CC')" title="Agrandir">⛶</button>
+            <button class="undo-btn" onclick="undoLastLine('f-autoanalyse',null)">↩ Annuler</button>
+            <button class="copy-section-btn" style="bottom:38px" onclick="copySection('f-autoanalyse',this)" title="Copier cette section">📋</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="card">
+        <div class="card-title"><span class="icon" style="background:#f2efe9">📄</span>Traçage généré — prêt à copier</div>
+        <div class="preview-label">Aperçu du traçage normé</div>
+        <div class="preview-box"><pre id="preview-text">Complétez les champs ci-dessus pour générer le traçage…</pre></div>
+        <div id="incomplete-msg" style="display:none;margin-top:10px;padding:10px 14px;background:#fef2f2;border-left:3px solid #ef4444;border-radius:8px;font-size:12.5px;color:#991b1b">
+          ⚠️ Certaines briques obligatoires ne sont pas remplies (indicées en 🔴). Complétez-les avant de copier le traçage.
+        </div>
+        <div class="actions-row">
+          <button class="btn-primary accent" id="copy-btn" onclick="copyText()">📋 Copier le traçage</button>
+          <button class="btn-primary" id="export-btn" onclick="exportTracage()" style="background:#0891b2">📄 Exporter</button>
+          <button class="btn-primary" onclick="openMailModal()" style="background:#15803d">✉️ Envoyer par mail</button>
+          <button class="btn-primary purple" onclick="saveTracage()">💾 Sauvegarder</button>
+          <button class="btn-secondary" onclick="resetForm()">↺ Réinitialiser</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUIVI EDPC -->
+    <div id="tab-suivi" class="tab-panel"><div id="suivi-gate"></div></div>
+
+    <!-- HISTORIQUE -->
+    <div id="tab-historique" class="tab-panel">
+      <div class="alert">🕓 Retrouvez ici vos traçages sauvegardés. Relancez un EDPC suivant en un clic.</div>
+      <div id="hist-container"></div>
+    </div>
+
+    <!-- BILAN CRC (accès CODIR uniquement) -->
+    <div id="tab-bilan" class="tab-panel"><div id="bilan-gate"></div></div>
+    <!-- GUIDE MODE D'EMPLOI -->
+    <div id="tab-guide" class="tab-panel">
+      <style>
+        .g-hero{background:var(--text);border-radius:var(--radius);padding:28px 24px;margin-bottom:20px;text-align:center}
+        .g-hero-title{font-family:"DM Serif Display",serif;font-size:26px;color:#fff;margin-bottom:6px}
+        .g-hero-title span{color:#fb923c}
+        .g-hero-sub{font-size:13px;color:rgba(255,255,255,.5)}
+        .g-section{margin-bottom:28px}
+        .g-section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--border)}
+        .g-step-num{width:30px;height:30px;background:var(--text);color:#fff;border-radius:50%;font-family:"DM Serif Display",serif;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .g-section-title{font-family:"DM Serif Display",serif;font-size:17px;color:var(--text)}
+        .g-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:10px}
+        .g-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;box-shadow:var(--shadow)}
+        .g-card.bl{border-top:3px solid var(--accent)}.g-card.gr{border-top:3px solid #15803d}.g-card.or{border-top:3px solid #c2410c}.g-card.go{border-top:3px solid #eab308}.g-card.pu{border-top:3px solid #7c3aed}
+        .g-card-icon{font-size:20px;margin-bottom:6px}.g-card-title{font-weight:700;font-size:13px;margin-bottom:3px}.g-card-text{font-size:12px;color:var(--text-muted);line-height:1.55}
+        .g-flow{display:flex;flex-direction:column;gap:0;margin-bottom:10px}
+        .g-flow-step{display:flex;gap:12px;align-items:flex-start;padding-bottom:16px;position:relative}
+        .g-flow-step:not(:last-child)::after{content:"";position:absolute;left:14px;top:30px;bottom:0;width:2px;background:var(--border)}
+        .g-flow-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--text);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;position:relative;z-index:1}
+        .g-flow-body{flex:1;padding-top:2px}.g-flow-body strong{font-size:13.5px;display:block;margin-bottom:2px}.g-flow-body p{font-size:12.5px;color:var(--text-muted)}
+        .g-tip{background:#eff4ff;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:9px 13px;font-size:12.5px;color:#1e40af;margin:8px 0}
+        .g-tip.green{background:#dcfce7;border-color:#15803d;color:#14532d}.g-tip.orange{background:#fff7ed;border-color:#c2410c;color:#7c2d12}
+        .g-hl{background:var(--text);border-radius:var(--radius-sm);padding:16px 20px;margin:10px 0}
+        .g-hl h4{font-family:"DM Serif Display",serif;font-size:15px;color:#fff;margin-bottom:5px}
+        .g-hl p{font-size:12.5px;color:rgba(255,255,255,.6);line-height:1.65}.g-hl .acc{color:#fb923c}
+        .g-faq{border-top:1px solid var(--border);margin-top:6px}
+        .g-faq-item{border-bottom:1px solid var(--border);padding:12px 0}
+        .g-faq-q{font-weight:700;font-size:13px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+        .g-faq-q::before{content:"?";width:18px;height:18px;background:var(--accent);color:#fff;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .g-faq-a{font-size:12.5px;color:var(--text-muted);padding-left:26px}
+        .g-chips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+        .g-chip{padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;border:1.5px solid}
+        .g-chip-go{background:#fefce8;border-color:#fde047;color:#713f12}
+        .g-chip-bl{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+        .g-chip-gr{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
+        .g-chip-or{background:#fff7ed;border-color:#fed7aa;color:#c2410c}
+      </style>
+
+      <div class="g-hero">
+        <div class="g-hero-title">Mode d'emploi <span>EDPC Manager</span></div>
+        <div class="g-hero-sub">Simple · Ludique · Compréhensible par tous · IDF 2026</div>
+      </div>
+
+      <div class="g-section">
+        <div class="g-section-header"><div class="g-step-num">1</div><div class="g-section-title">🚀 Démarrer</div></div>
+        <div class="g-flow">
+          <div class="g-flow-step"><div class="g-flow-dot">🌐</div><div class="g-flow-body"><strong>Ouvrez le lien dans votre navigateur</strong><p>Chrome, Edge, Firefox. Sur ordinateur ou téléphone.</p></div></div>
+          <div class="g-flow-step"><div class="g-flow-dot">🏢</div><div class="g-flow-body"><strong>Cliquez sur votre CRC (GO, PGE ou LST)</strong><p>Les managers et conseillers de votre CRC se chargent automatiquement.</p></div></div>
+          <div class="g-flow-step"><div class="g-flow-dot">👤</div><div class="g-flow-body"><strong>Choisissez manager + conseiller + période</strong><p>T1/T2/T3/T4 ou Point RVI. L'email du manager se remplit tout seul.</p></div></div>
+          <div class="g-flow-step"><div class="g-flow-dot">🎬</div><div class="g-flow-body"><strong>Mode démonstration disponible</strong><p>Pour tester sans risque — rien n'est sauvegardé, tout disparaît à la fermeture.</p></div></div>
+        </div>
+        <div class="g-tip">💾 Brouillon sauvegardé automatiquement — si vous fermez l'onglet par accident, votre saisie est là à la réouverture.</div>
+      </div>
+
+      <div class="g-section">
+        <div class="g-section-header"><div class="g-step-num">2</div><div class="g-section-title">🎯 Priorités identifiées — 1 clic = 2 champs remplis</div></div>
+        <div class="g-flow">
+          <div class="g-flow-step"><div class="g-flow-dot">1</div><div class="g-flow-body"><strong>Cliquez sur une priorité</strong><p>Ex : "Vente sur rebond" → une petite fenêtre s'ouvre.</p></div></div>
+          <div class="g-flow-step"><div class="g-flow-dot">2</div><div class="g-flow-body"><strong>Saisissez le taux et l'appréciation</strong><p>Tapez "14" → le % s'ajoute tout seul. Choisissez parmi les chips proposées.</p></div></div>
+          <div class="g-flow-step"><div class="g-flow-dot">✓</div><div class="g-flow-body"><strong>Valider → Priorité + Analyse Globale remplis en même temps</strong><p>Zéro double saisie.</p></div></div>
+        </div>
+        <div class="g-cards">
+          <div class="g-card bl"><div class="g-card-icon">🔵</div><div class="g-card-title">Conquête</div><div class="g-card-text">Rebond, Sowee, Izi, Homiris, GAZ, OM, Assurances, Qualité</div></div>
+          <div class="g-card pu"><div class="g-card-icon">🟣</div><div class="g-card-title">Compétitivité</div><div class="g-card-text">IPAG, Prod BO, Prod FO</div></div>
+          <div class="g-card gr"><div class="g-card-icon">🟢</div><div class="g-card-title">Engagement</div><div class="g-card-text">Sat FO, Sat BO, Taux de rebonds</div></div>
+          <div class="g-card go"><div class="g-card-icon">⭐</div><div class="g-card-title">CCX</div><div class="g-card-text">Missionnements — s'insère aussi dans l'Analyse Globale</div></div>
+        </div>
+        <div class="g-tip">💡 Bouton ↩ Annuler pour effacer la dernière ligne. Écriture libre possible dans le champ texte.</div>
+      </div>
+
+      <div class="g-section">
+        <div class="g-section-header"><div class="g-step-num">3</div><div class="g-section-title">⭐ Culture Vente — évaluez les techniques</div></div>
+        <div class="g-chips">
+          <span class="g-chip g-chip-go">💡 BAC</span><span class="g-chip g-chip-go">🔄 AREF</span><span class="g-chip g-chip-go">🤝 Posture conseil</span><span class="g-chip g-chip-go">👂 Écoute</span><span class="g-chip g-chip-go">🛡️ Traitement objections</span><span class="g-chip g-chip-go">🎯 SONCASE</span>
+        </div>
+        <p style="font-size:12.5px;color:var(--text-muted)">Pour chaque technique : Acquis · En cours · À renforcer → phrase insérée dans les Priorités ET l'Analyse Globale.</p>
+        <div class="g-tip green">⭐ Aussi dans le PAC — un chip spécial pour insérer directement une action Culture Vente.</div>
+      </div>
+
+      <div class="g-section">
+        <div class="g-section-header"><div class="g-step-num">4</div><div class="g-section-title">🧭 Analyse Globale — pré-remplie automatiquement</div></div>
+        <div class="g-cards">
+          <div class="g-card or"><div class="g-card-icon">✨</div><div class="g-card-title">Automatique</div><div class="g-card-text">Chaque priorité génère sa phrase avec taux et appréciation.</div></div>
+          <div class="g-card bl"><div class="g-card-icon">🔄</div><div class="g-card-title">Bilan T précédent</div><div class="g-card-text">Chips ✅ ⚠️ ❌ pour évaluer les résultats après "EDPC suivant".</div></div>
+        </div>
+      </div>
+
+      <div class="g-section">
+        <div class="g-section-header"><div class="g-step-num">5</div><div class="g-section-title">📋 Plan d'Actions et de Coaching (PAC)</div></div>
+        <div class="g-flow">
+          <div class="g-flow-step"><div class="g-flow-dot">📋</div><div class="g-flow-body"><strong>Choisissez une action type</strong><p>Double écoute, coaching CP, marguerite, suivi hebdo…</p></div></div>
+          <div class="g-flow-step"><div class="g-flow-dot">📝</div><div class="g-flow-body"><strong>Panneau orange → remplissez les valeurs</strong><p>Date (calendrier), taux, progression. Prévisualisation en temps réel.</p></div></div>
+          <div class="g-flow-step"><div class="g-flow-dot">✓</div><div class="g-flow-body"><strong>Insérer → phrase complète sans placeholder</strong><p>Aucun [X%] restant à la main.</p></div></div>
+        </div>
+        <div class="g-hl"><h4>💡 L'engagement <span class="acc">manager</span></h4><p>Le champ en dessous du PAC — coaching hebdo, double écoute avant le [date]… C'est ce qui ancre le suivi.</p></div>
+      </div>
+
+      <div class="g-section">
+        <div class="g-section-header"><div class="g-step-num">6</div><div class="g-section-title">🔁 Feedback manager</div></div>
+        <div class="g-cards">
+          <div class="g-card gr"><div class="g-card-icon">✅</div><div class="g-card-title">En progression</div><div class="g-card-text">6 formules positives pour valoriser les avancées.</div></div>
+          <div class="g-card or"><div class="g-card-icon">⚠️</div><div class="g-card-title">En stagnation</div><div class="g-card-text">6 formules constructives sans évolution marquée.</div></div>
+          <div class="g-card bl"><div class="g-card-icon">🔴</div><div class="g-card-title">Non atteints</div><div class="g-card-text">6 formules factuelles et bienveillantes.</div></div>
+        </div>
+        <div class="g-tip">📝 Les formules s'accumulent dans une zone de préparation → <strong>"✓ Insérer dans le feedback tracé"</strong> envoie tout en un bloc.</div>
+        <div class="g-tip orange">📅 Renseignez la date du prochain EDPC → <strong>"📅 Invitation agenda"</strong> crée un rappel J-2 dans Outlook.</div>
+      </div>
+
+      <div class="g-section">
+        <div class="g-section-header"><div class="g-step-num">7</div><div class="g-section-title">📄 Finaliser — 4 options</div></div>
+        <div class="g-cards">
+          <div class="g-card bl"><div class="g-card-icon">📋</div><div class="g-card-title">Copier</div><div class="g-card-text">Tout le traçage ou section par section avec les boutons 📋 individuels.</div></div>
+          <div class="g-card or"><div class="g-card-icon">📄</div><div class="g-card-title">Exporter</div><div class="g-card-text">Fichier Word .doc nommé EDPC_NomCC_Date.</div></div>
+          <div class="g-card gr"><div class="g-card-icon">✉️</div><div class="g-card-title">Envoyer par mail</div><div class="g-card-text">Professionnalisants de votre CRC — multi-sélection.</div></div>
+          <div class="g-card pu"><div class="g-card-icon">💾</div><div class="g-card-title">Sauvegarder</div><div class="g-card-text">Enregistre et bascule sur l'onglet Historique automatiquement.</div></div>
+        </div>
+        <div class="g-hl"><h4>🔴 La barre de <span class="acc">complétude</span></h4><p>0% → 100%. Briques vides = point 🔴. Bouton "Copier" bloqué tant que tout n'est pas rempli — c'est voulu pour garantir la qualité.</p></div>
+      </div>
+
+      <div class="g-section">
+        <div class="g-section-header"><div class="g-step-num">8</div><div class="g-section-title">📈 Tableau de suivi</div></div>
+        <div class="g-cards">
+          <div class="g-card gr"><div class="g-card-icon">🔒</div><div class="g-card-title">Code personnel</div><div class="g-card-text">Vue de votre équipe uniquement. Code CODIR = vue globale IDF.</div></div>
+          <div class="g-card bl"><div class="g-card-icon">🎯</div><div class="g-card-title">2 EDPC / trimestre</div><div class="g-card-text">Pastilles vertes ✅, oranges ⚠️, grises. Badge ⭐ si bonus.</div></div>
+          <div class="g-card go"><div class="g-card-icon">🏷️</div><div class="g-card-title">Motifs visibles</div><div class="g-card-text">DIAG, PAC, Suivi, Feedback affiché sous chaque CC. ⚠️ si même motif répété.</div></div>
+        </div>
+      </div>
+
+      <div class="g-section">
+        <div class="g-section-header"><div class="g-step-num">9</div><div class="g-section-title">🕓 Historique — le bouton EDPC suivant</div></div>
+        <div class="g-hl"><h4>🔄 <span class="acc">EDPC suivant</span> — le bouton magique</h4><p>Reprend l'identité du CC, affiche le bilan du T précédent avec chips ✅ ⚠️ ❌ interactifs, prépare le nouveau traçage en un clic.</p></div>
+        <div class="g-cards">
+          <div class="g-card bl"><div class="g-card-icon">📂</div><div class="g-card-title">Recharger</div><div class="g-card-text">Remet le traçage dans le générateur pour le modifier.</div></div>
+          <div class="g-card gr"><div class="g-card-icon">📋</div><div class="g-card-title">Copier</div><div class="g-card-text">Copie directement depuis l'historique.</div></div>
+          <div class="g-card or"><div class="g-card-icon">✕</div><div class="g-card-title">Supprimer</div><div class="g-card-text">Retire le traçage de l'historique local.</div></div>
+        </div>
+      </div>
+
+      <div class="g-section">
+        <div class="g-section-header"><div class="g-step-num">?</div><div class="g-section-title">❓ Questions fréquentes</div></div>
+        <div class="g-faq">
+          <div class="g-faq-item"><div class="g-faq-q">Si je ferme l'onglet, je perds tout ?</div><div class="g-faq-a">Non. Brouillon sauvegardé automatiquement. Tout est là à la réouverture.</div></div>
+          <div class="g-faq-item"><div class="g-faq-q">Le lien change à chaque mise à jour ?</div><div class="g-faq-a">Non. Le lien est toujours le même. Cliquez "↻ Actualiser" si vous voyez une ancienne version.</div></div>
+          <div class="g-faq-item"><div class="g-faq-q">Mes traçages sont visibles par d'autres managers ?</div><div class="g-faq-a">Non. Données stockées dans votre navigateur uniquement.</div></div>
+          <div class="g-faq-item"><div class="g-faq-q">La démo enregistre-t-elle des données ?</div><div class="g-faq-a">Non. Tout disparaît à la fermeture. Rien ne remonte dans les tableaux de suivi.</div></div>
+          <div class="g-faq-item"><div class="g-faq-q">Je peux l'utiliser sur téléphone ?</div><div class="g-faq-a">Oui. Sur ordinateur c'est plus confortable pour la saisie.</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AGRANDISSEMENT TEXTAREA -->
+<div id="expand-modal-overlay" style="display:none" onclick="if(event.target===this)closeExpand()">
+  <div class="expand-modal" onclick="event.stopPropagation()">
+    <div class="expand-modal-header">
+      <span class="expand-modal-title" id="expand-modal-title">Édition</span>
+      <button class="expand-modal-close" onclick="closeExpand()">✕ Fermer</button>
+    </div>
+    <textarea class="expand-modal-textarea" id="expand-modal-textarea" spellcheck="true"></textarea>
+    <div class="expand-modal-footer">
+      <button class="btn-secondary" onclick="closeExpand()">Annuler</button>
+      <button class="btn-primary accent" onclick="saveExpand()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ENVOI MAIL -->
+<div id="mail-modal-overlay" style="display:none" onclick="if(event.target===this)closeMailModal()">
+  <div class="mail-modal">
+    <h3>✉️ Envoyer le compte rendu EDPC</h3>
+    <p>Sélectionnez les professionnalisants destinataires pour votre CRC.</p>
+    <div class="mail-recipients" id="mail-recipients-list"></div>
+    <div class="mail-modal-actions">
+      <button class="btn-secondary" onclick="closeMailModal()">Annuler</button>
+      <button class="btn-primary accent" onclick="sendMail()">Envoyer →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<button class="scroll-top" id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Remonter en haut">↑</button>
+
+<script>
+// =====================================================
+// ITEMS DIAG — Conquête / Compétitivité / Engagement
+// =====================================================
+// =====================================================
+// CULTURE VENTE — chips d'évaluation
+// =====================================================
+const cvSelections = {};
+
+function toggleCvChip(btn, technique, niveau) {
+  const group = btn.closest('.cv-technique').querySelectorAll('.cv-chip');
+  group.forEach(c => c.classList.remove('selected'));
+  if(cvSelections[technique] === niveau){
+    delete cvSelections[technique];
+  } else {
+    cvSelections[technique] = niveau;
+    btn.classList.add('selected');
+  }
+  updateCvPreview();
+}
+
+function updateCvPreview() {
+  const el = document.getElementById('cv-preview');
+  if(!el) return;
+  const entries = Object.entries(cvSelections);
+  if(!entries.length){ el.textContent = 'Sélectionnez les techniques ci-dessus pour composer votre évaluation…'; return; }
+  const cc = getPrenom();
+  const acquis    = entries.filter(([,v]) => v.includes('acquis')||v.includes('maîtrisé')||v.includes('acquise'));
+  const enCours   = entries.filter(([,v]) => v.includes('cours')||v.includes('progression')||v.includes('développement'));
+  const renforcer = entries.filter(([,v]) => v.includes('renforcer')||v.includes('travailler')||v.includes('prioritaire'));
+  let parts = [];
+  if(acquis.length)    parts.push(`${cc} maîtrise : ${acquis.map(([t])=>t).join(', ')}`);
+  if(enCours.length)   parts.push(`en cours : ${enCours.map(([t])=>t).join(', ')}`);
+  if(renforcer.length) parts.push(`à renforcer : ${renforcer.map(([t])=>t).join(', ')}`);
+  el.textContent = '→ Culture Vente — ' + parts.join(' · ');
+}
+
+function resetCultureVente() {
+  Object.keys(cvSelections).forEach(k => delete cvSelections[k]);
+  document.querySelectorAll('.cv-chip').forEach(c => c.classList.remove('selected'));
+  updateCvPreview();
+  showToast('↩ Sélections Culture Vente réinitialisées');
+}
+
+function insertCultureVente() {
+  const entries = Object.entries(cvSelections);
+  if(!entries.length){ showToast('⚠️ Sélectionnez au moins une technique'); return; }
+  const cc = getPrenom();
+  const acquis    = entries.filter(([,v]) => v.includes('acquis')||v.includes('maîtrisé')||v.includes('acquise'));
+  const enCours   = entries.filter(([,v]) => v.includes('cours')||v.includes('progression')||v.includes('développement'));
+  const renforcer = entries.filter(([,v]) => v.includes('renforcer')||v.includes('travailler')||v.includes('prioritaire'));
+  let phrase = `Culture Vente — ${cc} :`;
+  if(acquis.length)    phrase += ` ${acquis.map(([t])=>t).join(', ')} [acquis]`;
+  if(enCours.length)   phrase += ` · ${enCours.map(([t])=>t).join(', ')} [en cours]`;
+  if(renforcer.length) phrase += ` · ${renforcer.map(([t])=>t).join(', ')} [à renforcer]`;
+  appendToField('f-priorites', phrase, null);
+  const axePhrase = `Sur la Culture Vente, ${cc} présente le niveau suivant : ${entries.map(([t,v])=>`${t} (${v})`).join(', ')}.`;
+  const axeEl = document.getElementById('f-axe');
+  if(axeEl && !axeEl.value.includes('Culture Vente')){
+    axeEl.value += (axeEl.value.trim()?'\n':'') + axePhrase;
+    axeEl.dispatchEvent(new Event('input'));
+  }
+  Object.keys(cvSelections).forEach(k => delete cvSelections[k]);
+  document.querySelectorAll('.cv-chip').forEach(c => c.classList.remove('selected'));
+  updateCvPreview();
+  showToast('✅ Culture Vente insérée dans les priorités et l\'Analyse Globale');
+}
+
+// =====================================================
+// DIAG_ITEMS — Conquête / Compétitivité / Engagement
+// =====================================================
+const DIAG_ITEMS = {
+  conquete: [
+    "Vente sur rebond [X%]",
+    "Ventes de service — Protection Facture et/ou AD [X%]",
+    "Contrats assurantiels [X%]",
+    "Ventes GAZ en FO [X%]",
+    "Ventes OM en FO [X%]",
+    "Apports d'affaires Sowee — en taux ou R/O [X%]",
+    "Apports d'affaires Izi by EDF [X%]",
+    "Apports d'affaires Izi Confort by EDF [X%]",
+    "Apports d'affaires Homiris [X%]",
+    "Qualité des ventes [X%]",
+  ],
+  competitivite: [
+    "Diminution du taux d'IPAG [X%]",
+    "Prod BO [X%]",
+    "Prod FO [X%]",
+  ],
+  engagement: [
+    "Sat FO [X%]",
+    "Sat BO [X%]",
+    "Diminution du taux de rebonds [X%]",
+  ],
+};
+
+function renderDiagChips(){
+  ['conquete','competitivite','engagement'].forEach(cat=>{
+    const el=document.getElementById(`lib-${cat}`);
+    if(!el)return;
+    el.innerHTML='';
+    DIAG_ITEMS[cat].forEach(phrase=>{
+      const btn=document.createElement('button');
+      btn.className='lib-chip';btn.textContent=phrase;
+      const hasPct=phrase.includes('[X%]');
+      btn.onclick=()=>{
+        if(hasPct) showPctPopup(phrase,btn);
+        else appendToField('f-priorites',phrase,btn);
+      };
+      el.appendChild(btn);
+    });
+  });
+}
+const PROFESSIONNALISANTS = {
+  GO:  ["astou.dansokho@edf.fr","nicolas-n.regnier@edf.fr","lucien.tarabay@edf.fr","lucie.terrein@edf.fr"],
+  PGE: ["julien.delaunay@edf.fr","jennifer.dos-santos@edf.fr","patrice.faubert@edf.fr","chris-tophe.fauchon@edf.fr","christelle.prieur@edf.fr"],
+  LST: ["frederic.da-silva@edf.fr","fabienne.leflon@edf.fr","christophe-jea.morin@edf.fr","ludivine.prehu@edf.fr"],
+};
+
+// =====================================================
+// MODAL ENVOI PAR MAIL
+// =====================================================
+function openMailModal() {
+  const crc     = selectedCRC;
+  const overlay = document.getElementById('mail-modal-overlay');
+  const list    = document.getElementById('mail-recipients-list');
+  if(!overlay || !list) return;
+
+  list.innerHTML = '';
+  const recipients = crc ? PROFESSIONNALISANTS[crc] : [];
+
+  if(!recipients || !recipients.length) {
+    list.innerHTML = `<div class="mail-empty">Aucun professionnel disponible pour ce CRC.</div>`;
+  } else {
+    // Tout sélectionner
+    const allRow = document.createElement('div');
+    allRow.className = 'mail-select-all';
+    allRow.innerHTML = `<input type="checkbox" id="mc-all" onchange="toggleAllRecipients(this)"><label for="mc-all">Tout sélectionner</label>`;
+    list.appendChild(allRow);
+
+    recipients.forEach((email, i) => {
+      const div = document.createElement('div');
+      div.className = 'mail-recipient';
+      div.innerHTML = `<input type="checkbox" id="mc-${i}" value="${email}" onchange="updateSelectAll()"><label for="mc-${i}">${email}</label>`;
+      div.onclick = (e) => {
+        if(e.target.tagName !== 'INPUT'){
+          const cb = div.querySelector('input');
+          cb.checked = !cb.checked;
+          updateSelectAll();
+        }
+        div.classList.toggle('checked', div.querySelector('input').checked);
+      };
+      list.appendChild(div);
+    });
+  }
+
+  overlay.style.display = 'flex';
+  // Focus trap
+  setTimeout(() => overlay.querySelector('.btn-primary')?.focus(), 50);
+}
+
+function toggleAllRecipients(allCb) {
+  document.querySelectorAll('#mail-recipients-list input[type=checkbox]:not(#mc-all)').forEach(cb => {
+    cb.checked = allCb.checked;
+    cb.closest('.mail-recipient')?.classList.toggle('checked', allCb.checked);
+  });
+}
+
+function updateSelectAll() {
+  const all  = document.querySelectorAll('#mail-recipients-list input[type=checkbox]:not(#mc-all)');
+  const checked = document.querySelectorAll('#mail-recipients-list input[type=checkbox]:not(#mc-all):checked');
+  const allCb = document.getElementById('mc-all');
+  if(allCb) allCb.checked = all.length > 0 && checked.length === all.length;
+}
+
+function closeMailModal() {
+  const overlay = document.getElementById('mail-modal-overlay');
+  if(overlay) overlay.style.display = 'none';
+}
+
+function sendMail() {
+  const checked = [...document.querySelectorAll('#mail-recipients-list input[type=checkbox]:checked')];
+  if(!checked.length) { showToast('⚠️ Sélectionnez au moins un destinataire'); return; }
+  const to      = checked.map(cb => cb.value).join(',');
+  const subject = encodeURIComponent('Compte rendu EDPC');
+  const body    = encodeURIComponent(document.getElementById('preview-text')?.textContent || '');
+  window.open(`mailto:${to}?subject=${subject}&body=${body}`);
+  closeMailModal();
+  showToast(`✉️ Mail ouvert avec ${checked.length} destinataire(s)`);
+}
+
+// =====================================================
+// AMBITION EDPC — AFFICHAGE DYNAMIQUE DES BRIQUES
+// =====================================================
+// Correspondances ambition → id des cartes à AFFICHER
+// Toutes les cartes du générateur
+const ALL_BRIQUE_IDS = ['card-priorites','card-axe','card-pac','card-feedback','card-autoanalyse'];
+
+const AMBITION_MAP = {
+  // Analyse Globale / DIAG → Analyse Globale + Priorités + Plan d'actions
+  'diag':     ['card-axe', 'card-priorites', 'card-pac'],
+  // Priorité / PAC → Priorités + Plan d'actions
+  'pac':      ['card-priorites', 'card-pac'],
+  // Suivi des engagements → Plan d'actions + Feedback
+  'suivi':    ['card-pac', 'card-feedback'],
+  // Feedback → Analyse Globale + Feedback
+  'feedback': ['card-axe', 'card-feedback'],
+};
+
+function onAmbitionChange() {
+  const ambition = v('f-ambition');
+  const diagSections   = document.getElementById('lib-diag-sections');
+  const prioritesSection = document.getElementById('lib-priorites-section');
+
+  // Quand une ambition est sélectionnée → masquer les chips génériques, afficher les sous-sections
+  const showDiag = ambition === 'diag' || ambition === 'pac';
+
+  if(prioritesSection) prioritesSection.style.display = showDiag ? 'none' : 'block';
+  if(diagSections){
+    if(showDiag){
+      diagSections.style.display = 'block';
+      renderDiagChips();
+    } else {
+      diagSections.style.display = 'none';
+    }
+  }
+
+  // Afficher/masquer le chip Culture Vente dans l'Analyse Globale
+  const axeCvWrap = document.getElementById('axe-cv-wrap');
+  if(axeCvWrap) axeCvWrap.style.display = (ambition === 'feedback') ? 'block' : 'none';
+  // Fermer le panneau si on change d'ambition
+  const axeCvPanel = document.getElementById('axe-cv-panel');
+  if(axeCvPanel && ambition !== 'feedback') axeCvPanel.style.display = 'none';
+
+  // Afficher/masquer les briques selon l'ambition
+  if(!ambition){
+    ALL_BRIQUE_IDS.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){ el.classList.remove('brique-hidden','brique-visible'); }
+    });
+  } else {
+    const visible = AMBITION_MAP[ambition] || [];
+    ALL_BRIQUE_IDS.forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el) return;
+      if(visible.includes(id)){
+        el.classList.remove('brique-hidden');
+        el.classList.add('brique-visible');
+      } else {
+        el.classList.remove('brique-visible');
+        el.classList.add('brique-hidden');
+      }
+    });
+  }
+  updateCompletude();
+  generatePreview();
+}
+const TEAMS = {
+  GO: {
+    "Alissa":     ["Valerie Blot","Khalil El Amri","Maxime Fronczak","Anis M Hamdi","Mélanie Vey","Ange Djike","Marie Révereau"],
+    "Josephine":  ["Stéphane Dorr","Anahide Fatemi","Jade Salou","Rhizlaine Hamdi","David Pinto","Hela Gadi","Linda Hacheur","Léa Clemenceau","Régina Mea","Brahim Nasri"],
+    "Morad":      ["Emilien Bansept","Tiphaine Coste","Sliman Marref","Luca Vadeleux","Mairam Djigo","Ayrton Olivier","Amel Djemmam","Florue Hernandez"],
+    "Martin":     ["Mohamed Drame","Laurine Euphémie","Kahina Abed","Chihira Mendil","Afifah Samih","Yhuval Tskala","Saliha Djeghlaf"],
+    "Bénédicte":  ["Guillaume Barle","Jimmy Bellassen","Oumar Diaby","Angel Manzano","Ibrahim Sylla","Aurélie Beaufumé","Mayline Coudray","Fallou M'Bon","Christophe Yeboah","Rémi Hardy"],
+  },
+  PGE: {
+    "Clément":    ["Lauwenza Barthélemy","William Rimo","Awa Soumahoro","Christelle Loff","Marie-Eve Morand-Achour","Florian Noury","Soraya Aksouri","Danielle Assous","Diane Collignon"],
+    "Vloreta":    ["Guy Gensisi","Brice Hilaire","Hassan Mamoudou","Nahima Chikhi","Nathalie Cordon","Lydia Benmessaoud","Hervé Emile","Nicola Goupil","Soumia Ouinkhir"],
+    "Lénaïc":     ["Sara Badia","Tiguida Camara","Kamal Goual","Bertrand Fesneau","Mamadou Fofana","Hawa-Bobo Nimaga","Jeremy Thomas"],
+    "Claudine":   ["Linda Grevsbo","Fatoumata Fofana","Séverine Boulay","Mireille Mazy","Cécile Plat","Tania Sileber","Marie-Myriam Tamba-Tsoko","Nadia Colin-Dehak","Cristalina Da-Silva"],
+    "Helena":     ["Virginie Doyen","Lydie Elisha N'Guessan","Mélanie Vale-Da-Serra","Lydie-Madison Dos Santos","Sofia Reggad","Tasnime Fidahoussen","Noura Si-Fodil","Anthony Bieber"],
+    "Sofia":      ["Raphaëlle Bouillon","Sylvain Bouzonie","Ismaël Haroual","Habibatou Matoudidi","Sophie Yssap","Clément Claustrat","Alexis Guehairia","Amal Belhamri","Sarah Inès Karaoun"],
+    "Mickaël":    ["Elisa Cannizzaro","Sarah Sainte","Djenabou Guirassy","Adama Diarra","Omar Morsy","Souad El-Merabti","Dalila Maouche","Margaux Wallet"],
+    "Josefina":   ["Sitty Mohamed","Gokmen Yilmaz","Maimouna Napo","Haydn Salarzadeh Amiri"],
+    "Cateline":   ["Karima Laouani-Soufi","Helena Mendes Da Fonseca","Anaïs Faivre","Manuel Neret","Virginie Nègovanovic","Christelle Boissard Calcul","Abdel Boussalia"],
+  },
+  LST: {
+    "Benoît":     ["Olivier-Franck Leclerc","Emilie Bernard","Charlène Coll","Lisa Guyonnet","Laurelyne Manuel De Condinguy","Malika El-Adjam","Sébastien Jenart"],
+    "David":      ["Elizeth Dizikama","Nicolas Doucet","Méline Mallard","Jessica Mouton-Lavembo","Ynnas Mellahi","Emilie Auger","Inès Dos Anjos Pereira","Audrey Demory","Ingrid Ferry"],
+    "Jennifer":   ["Ilham Douich","Alexis Lehoux","Manon Pillot","Abdelwahab Boutik","Samantha El Gueddar","Cintyha Marseglia","Oumarou Diarra","Hatouma Doucouré","Virginie Fernandes"],
+    "Sylvie":     ["Méliane Bessemoulin","Adrien Ledain","Nadia Nahas","Antoinette Novais Pereira","Mylène Muslic","Sandrine Terrentroy","Sabrina Cadol","Amel Lassoued","Maëlys Leduc"],
+    "Sylvain":    ["Emric Siouparsam","Ophélie Moulin","Julie Martin","Aurélie Menard","Muriel Ralitera","Florian Coston","Kalvyn Mikola","Marie Boymandjia"],
+    "Horizon":    ["Antoine Benoît","Sébastien Blot","Marie Colas","Stéphanie Farret","Alexane Gibault","Raphaëlle Hernandez","Véronique Jollet","Teninke Koïta","Alexandre Leduc","Angeline Lemaire"],
+  }
+};
+
+// Codes d'accès
+const ACCESS_CODES = {
+  "alissa":"GO01","josephine":"GO02","morad":"GO03","martin":"GO04","bénédicte":"GO05",
+  "clément":"PG01","vloreta":"PG02","lénaïc":"PG03","claudine":"PG04","helena":"PG05","sofia":"PG06","mickaël":"PG07","josefina":"PG08","cateline":"PG09",
+  "benoît":"LS01","david":"LS02","jennifer":"LS03","sylvie":"LS04","sylvain":"LS05","horizon":"LS06",
+  "admin":"CODIR2026"
+};
+
+// Emails managers (pré-remplissage automatique)
+const MANAGER_EMAILS = {
+  "Alissa":    "alissa.phimphrachanh@edf.fr",
+  "Josephine": "josephine.leav@edf.fr",
+  "Martin":    "martin.biessy@edf.fr",
+  "Morad":     "morad.tsri@edf.fr",
+  "Cateline":  "cateline.escorial@edf.fr",
+  "Claudine":  "claudine.gomis@edf.fr",
+  "Clément":   "clement.legallet@edf.fr",
+  "Helena":    "helena.flamant@edf.fr",
+  "Josefina":  "josefina.canonne@edf.fr",
+  "Lénaïc":   "lenaic.fairier@edf.fr",
+  "Mickaël":   "mickael.pinto@edf.fr",
+  "Sofia":     "sofia.saidani@edf.fr",
+  "Vloreta":   "vloreta.celin@edf.fr",
+  "Benoît":    "benoit.passot@edf.fr",
+  "David":     "david.navarro@edf.fr",
+  "Jennifer":  "jennifer.barilleau@edf.fr",
+  "Sylvain":   "sylvain.godde-planson@edf.fr",
+  "Sylvie":    "sylvie.bertoumieux@edf.fr",
+};
+
+// =====================================================
+// BIBLIOTHÈQUE
+// =====================================================
+const LIBRARY = {
+  "Priorités identifiées": [
+    "Vente sur rebond [X%]",
+    "Ventes de service — Protection Facture et/ou AD [X%]",
+    "Contrats assurantiels [X%]",
+    "Ventes GAZ en FO [X%]",
+    "Ventes OM en FO [X%]",
+    "Apports d'affaires Sowee — en taux ou R/O [X%]",
+    "Apports d'affaires Izi by EDF [X%]",
+    "Apports d'affaires Izi Confort by EDF [X%]",
+    "Apports d'affaires Homiris [X%]",
+    "Diminution du taux d'IPAG [X%]",
+    "Prod BO [X%]","Prod FO [X%]","Sat FO [X%]","Sat BO [X%]",
+    "Diminution du taux de rebonds [X%]","Qualité des ventes [X%]",
+  ],
+  // Missionnements CCX — liste épurée en 4 grandes catégories
+  "Missionnement CCX": [
+    "CCX — Référent vente rebond : animation équipe & partage bonnes pratiques",
+    "CCX — Référent satisfaction client : relais qualité & suivi CSAT",
+    "CCX — Référent apports d'affaires (Sowee / Izi / Homiris) : animation & suivi",
+    "CCX — Référent formation : accompagnement montée en compétences équipe",
+    "CCX — Référent outils & processus : relais digitaux & procédures",
+    "CCX — Référent GAZ / OM : expertise produit & soutien équipe",
+  ],
+  "Auto-analyse CC": [
+    "exprime une prise de conscience sur l'axe identifié et comprend les écarts observés.",
+    "reconnaît les difficultés rencontrées et identifie ses propres leviers de progression.",
+    "propose lui-même une piste d'amélioration concrète sur cet axe.",
+    "se fixe un niveau de performance à atteindre : [X%] d'ici le [date].",
+    "évalue son niveau actuel à [X%] et vise [Y%] sur la prochaine période.",
+    "s'engage à mettre en pratique les actions définies lors de cet EDPC.",
+    "exprime sa motivation à progresser et comprend l'enjeu de l'indicateur travaillé.",
+    "partage ses réussites sur [axe] et identifie ce qui a permis d'atteindre ce niveau.",
+    "reconnaît le gap entre le réalisé ([X%]) et l'attendu ([Y%]) et propose des pistes concrètes.",
+  ],
+  "Plan d'action (PAC)": [
+    "Double écoute CP/RE avant le [date] : objectif taux de [X%] — progression attendue de [Y pts] à mesurer à cette échéance.",
+    "Double écoute conseiller expert vente : [x] appels enregistrés/semaine — progression mesurée le [date], objectif [X%].",
+    "Coaching CP planifié avant le [date] — objectif [X%] sur [indicateur], résultat attendu à confirmer lors du prochain EDPC.",
+    "Marguerite : travail posture conseil d'ici le [date] — progression attendue de [X pts] sur [indicateur].",
+    "Suivi hebdo des indicateurs chaque [jour] jusqu'au [date] — objectif [X%] à atteindre à cette échéance.",
+    "Passer de [X%] à [Y%] sur [indicateur] d'ici le [date] — mesure de progression lors du prochain EDPC.",
+    "Enregistrement de [x] appels/semaine avec auto-évaluation — bilan quantitatif le [date], objectif [X%].",
+  ],
+  "Feedback — En progression": [
+    "Depuis notre dernier EDPC, [Prénom] a progressé sur [axe] : [observation concrète].",
+    "Point positif observé en double écoute le [date] : [fait précis].",
+    "La mise en pratique des actions PAC est visible et mesurable à ce stade.",
+    "[Prénom] fait preuve de [qualité] et cela se traduit concrètement par [résultat].",
+    "Le niveau de maîtrise a évolué de [X%] à [Y%] sur la période — à consolider.",
+    "Les engagements pris lors du dernier EDPC ont été respectés, la dynamique est positive.",
+  ],
+  "Feedback — En stagnation": [
+    "Depuis notre dernier EDPC, les résultats de [Prénom] sur [axe] restent stables à [X%], sans progression notable.",
+    "Les actions du PAC ont été initiées mais n'ont pas encore produit les effets attendus.",
+    "Le niveau reste constant à [X%] — un ajustement du plan d'action est envisagé.",
+    "Des efforts sont observés mais la progression n'est pas encore au rendez-vous sur cet indicateur.",
+    "Nous avons identifié ensemble les freins qui limitent la progression et redéfini les priorités.",
+    "Un point de suivi renforcé est mis en place afin de relancer la dynamique d'amélioration.",
+  ],
+  "Feedback — Engagements non atteints": [
+    "Les engagements définis lors du dernier EDPC n'ont pas été atteints : [indicateur] est à [X%] pour un objectif de [Y%].",
+    "Un écart est constaté entre les actions prévues et leur mise en pratique réelle sur la période.",
+    "Nous avons échangé de manière factuelle sur les résultats observés et les étapes non réalisées.",
+    "Un nouveau plan d'action est co-construit avec des jalons intermédiaires pour faciliter la réalisation.",
+    "La situation a été analysée positivement : des leviers concrets ont été identifiés pour repartir sur de bonnes bases.",
+    "Un accompagnement renforcé est mis en place pour soutenir [Prénom] dans l'atteinte des prochains objectifs.",
+  ],
+};
+
+const MANAGER_ANALYSE_MAP = {
+  "Vente sur rebond":                      "Sur la vente sur rebond, le taux actuel de {CC} est de [X%] — [réussite / point de vigilance] sur la période.",
+  "Ventes de service":                     "Sur les ventes de service (Protection Facture / AD), le taux de {CC} est de [X%] — [en ligne avec l'objectif / axe à renforcer].",
+  "Contrats assurantiels":                 "Sur les contrats assurantiels, le taux de {CC} est de [X%] — [objectif atteint / axe de progression identifié].",
+  "Ventes GAZ en FO":                      "Sur les ventes GAZ en FO, le réalisé de {CC} est de [X] pour un objectif de [Y] — [en avance / dans les objectifs / écart à résorber].",
+  "Ventes OM en FO":                       "Sur les ventes OM en FO, le réalisé de {CC} est de [X] pour un objectif de [Y] — [performance satisfaisante / effort à maintenir / axe de progression identifié].",
+  "Apports d'affaires Sowee":              "Les apports d'affaires Sowee de {CC} sont à [X%] — [en progression / en recul] par rapport à la période précédente.",
+  "Apports d'affaires Izi by EDF":         "Les apports d'affaires Izi by EDF de {CC} atteignent [X%] — [{CC} maîtrise bien / doit progresser sur] ce levier.",
+  "Apports d'affaires Izi Confort by EDF": "Les apports d'affaires Izi Confort by EDF de {CC} sont à [X%] — [point fort / axe de travail] identifié.",
+  "Apports d'affaires Homiris":            "Les apports d'affaires Homiris de {CC} sont à [X%] — [point fort / axe de travail] pour le prochain cycle.",
+  "Diminution du taux d'IPAG":             "Le taux d'IPAG de {CC} est à [X%] — [en amélioration / nécessite un plan d'actions renforcé].",
+  "Prod BO":                               "La prod BO de {CC} affiche [X%] — [les objectifs sont atteints / un effort est nécessaire].",
+  "Prod FO":                               "La prod FO de {CC} est à [X%] — [performance en ligne avec les attendus / écart à résorber].",
+  "Sat FO":                                "La Sat FO de {CC} ressort à [X%] — [satisfaisante / des axes de progrès ont été identifiés].",
+  "Sat BO":                                "La Sat BO de {CC} est à [X%] — [les retours sont positifs / des points de friction persistent].",
+  "Diminution du taux de rebonds":         "Le taux de rebonds de {CC} est de [X%] — [en diminution conforme à l'objectif / effort à maintenir].",
+  "Qualité des ventes":                    "La qualité des ventes de {CC} est évaluée à [X%] — [les critères sont respectés / des écarts ont été détectés].",
+};
+
+// Mapping CCX → phrase Analyse Globale
+const CCX_ANALYSE_MAP = {
+  "CCX — Référent vente rebond":           "{CC} est missionnée en tant que CCX Référent vente rebond — animation de l'équipe et partage de bonnes pratiques.",
+  "CCX — Référent satisfaction client":    "{CC} est missionnée en tant que CCX Référent satisfaction client — relais qualité et suivi CSAT.",
+  "CCX — Référent apports d'affaires":     "{CC} est missionnée en tant que CCX Référent apports d'affaires (Sowee / Izi / Homiris) — animation et suivi.",
+  "CCX — Référent formation":              "{CC} est missionnée en tant que CCX Référent formation — accompagnement de la montée en compétences.",
+  "CCX — Référent outils & processus":     "{CC} est missionnée en tant que CCX Référent outils & processus — relais digitaux et procédures.",
+  "CCX — Référent GAZ / OM":              "{CC} est missionnée en tant que CCX Référent GAZ / OM — expertise produit et soutien à l'équipe.",
+};
+
+// =====================================================
+// ÉTAT
+// =====================================================
+let currentSituation = null;
+let autoSaveTimer = null;
+let currentAccessRole = null;
+let dashMonth = new Date().toISOString().slice(0,7);
+let isDemoMode = false;
+let selectedCRC = null; // CRC choisi depuis le splash
+
+// =====================================================
+// SPLASH — SÉLECTION CRC
+// =====================================================
+function selectCRC(crc, btn) {
+  selectedCRC = crc;
+  document.querySelectorAll('.splash-crc-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  // Lancer directement l'app après une courte animation
+  setTimeout(() => enterApp(false), 350);
+}
+
+function enterApp(demo = false) {
+  isDemoMode = demo;
+  document.getElementById('splash').classList.add('hidden');
+  setTimeout(() => {
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    // Show CRC badge in header
+    const badge = document.getElementById('hdr-crc-badge');
+    if (badge && selectedCRC) {
+      badge.textContent = selectedCRC;
+      badge.className = 'hdr-badge hdr-' + selectedCRC.toLowerCase();
+    }
+    // Pre-populate manager list for selected CRC (mode démo inclus)
+    if (selectedCRC) populateManagersForCRC(selectedCRC);
+    // Bilan CRC — CODIR only
+    const bilanBtn = document.getElementById('tab-bilan-btn');
+    if (bilanBtn) bilanBtn.style.display = 'none'; // hidden by default, shown after CODIR login
+    if (demo) {
+      // En mode démo, forcer PGE si aucun CRC n'a été sélectionné sur le splash
+      if (!selectedCRC) selectedCRC = 'PGE';
+      const badge = document.getElementById('hdr-crc-badge');
+      if (badge) { badge.textContent = selectedCRC; badge.className = 'hdr-badge hdr-' + selectedCRC.toLowerCase(); }
+      populateManagersForCRC(selectedCRC);
+      document.getElementById('demo-banner').classList.add('visible');
+      renderLibrary();
+      generatePreview();
+      loadDemoData();
+    } else {
+      renderLibrary();
+      generatePreview();
+      loadDraft();
+    }
+  }, 500);
+}
+
+function populateManagersForCRC(crc) {
+  const mgrSel = document.getElementById('f-manager');
+  mgrSel.innerHTML = '<option value="">— Choisir le manager —</option>';
+  const mgrs = crc && TEAMS[crc] ? Object.keys(TEAMS[crc]).sort() : [];
+  mgrs.forEach(m => { const o=document.createElement('option'); o.value=m; o.textContent=m; mgrSel.appendChild(o); });
+  document.getElementById('f-prenom').innerHTML = '<option value="">— Choisir d\'abord le manager —</option>';
+}
+
+function forceRefresh() {
+  showToast('🔄 Chargement de la dernière version…');
+  setTimeout(() => {
+    const url = window.location.href.split('?')[0];
+    window.location.replace(url + '?v=' + Date.now());
+  }, 800);
+}
+
+function loadDemoData() {
+  // Ne pas forcer le CRC — le manager l'a déjà sélectionné depuis le splash
+  // On injecte uniquement l'historique fictif pour la démo "EDPC suivant"
+  const set = (id, val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
+
+  // Injecter un historique fictif pour pouvoir démontrer "EDPC suivant"
+  const demoHistory = [{
+    id: 9000000001,
+    date: '15/03/2026',
+    quarter: 'T1 2026',
+    month: '2026-03',
+    prenom: 'Lauwenza Barthélemy',
+    prenomCourt: 'Lauwenza',
+    crc: 'PGE',
+    manager: 'Clément',
+    periode: 'T1 2026',
+    situation: 'stagnation',
+    text: `📋 TRAÇAGE EDPC — CRC PGE\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nConseiller : Lauwenza Barthélemy\nManager    : Clément\nDate EDPC  : 15/03/2026   |   Période : T1 2026\n\n🎯 PRIORITÉS IDENTIFIÉES\n   • Vente sur rebond 12%\n   • Apports d'affaires Sowee 8%\n\n🧭 ANALYSE GLOBALE\n   Sur la vente sur rebond, le taux actuel de Lauwenza est de 12% — point de vigilance.\n   Les apports d'affaires Sowee de Lauwenza sont à 8% — en recul par rapport à la période précédente.\n\n📋 PLAN D'ACTION ET DE COACHING (PAC)\n   → Double écoute CP/RE avant le 15/04/2026 : objectif taux de 15% — progression attendue de 3 pts.\n   Engagement manager : Coaching CP hebdo + double écoute avant le 01/04/2026\n\n🔁 FEEDBACK MANAGER — EN STAGNATION\n   Les résultats de Lauwenza sur la vente sur rebond restent proches de 12% sans évolution marquée — on va revoir ensemble ce qui bloque.\n   Prochain EDPC : 15/06/2026\n\n💬 AUTO-ANALYSE DU CC\n   Lauwenza reconnaît les difficultés rencontrées et identifie ses propres leviers de progression.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nTraçage généré via EDPC Manager · IDF`,
+    data: {
+      crc: 'PGE', manager: 'Clément', prenom: 'Lauwenza Barthélemy',
+      periode: 'T1', annee: '2026', dateEdpc: '2026-03-15', semaineEdpc: '',
+      priorites: 'Vente sur rebond 12%\nApports d\'affaires Sowee 8%',
+      axe: 'Sur la vente sur rebond, le taux actuel de Lauwenza est de 12% — point de vigilance.\nLes apports d\'affaires Sowee de Lauwenza sont à 8% — en recul par rapport à la période précédente.',
+      pacAction: 'Double écoute CP/RE avant le 15/04/2026 : objectif taux de 15% — progression attendue de 3 pts.',
+      pacEngMgr: 'Coaching CP hebdo + double écoute avant le 01/04/2026',
+      feedback: 'Les résultats de Lauwenza sur la vente sur rebond restent proches de 12% sans évolution marquée — on va revoir ensemble ce qui bloque.',
+      feedbackDate: '2026-06-15', feedbackSemaine: '',
+      autoanalyse: 'Lauwenza reconnaît les difficultés rencontrées et identifie ses propres leviers de progression.',
+      situation: 'stagnation'
+    }
+  }];
+  try { sessionStorage.setItem('edpc_demo_history', JSON.stringify(demoHistory)); } catch(e) {}
+
+  // Démarrage à 0 — tout vide pour montrer l'impact de chaque saisie en direct
+  // L'historique fictif T1 2026 est disponible dans l'onglet Historique
+  generatePreview();
+  showToast('🎬 Mode démonstration — saisissez librement pour voir la complétude évoluer', 4000);
+}
+
+// =====================================================
+// IDENTIFICATION
+// =====================================================
+function onManagerChange() {
+  const crc = selectedCRC || 'GO';
+  const mgr = document.getElementById('f-manager')?.value;
+  const ccSel = document.getElementById('f-prenom');
+  ccSel.innerHTML = '<option value="">— Choisir le conseiller —</option>';
+  const conseillers = crc && mgr && TEAMS[crc]?.[mgr] ? [...TEAMS[crc][mgr]].sort() : [];
+  conseillers.forEach(cc => { const o=document.createElement('option'); o.value=cc; o.textContent=cc; ccSel.appendChild(o); });
+  // Pré-remplir l'email du manager automatiquement
+  const emailEl = document.getElementById('f-email-manager');
+  if(emailEl && mgr && MANAGER_EMAILS[mgr]) emailEl.value = MANAGER_EMAILS[mgr];
+  renderAutoAnalyseChips();
+  generatePreview();
+}
+function onPrenomChange() { renderAutoAnalyseChips(); generatePreview(); }
+
+// =====================================================
+// INVITATION AGENDA OUTLOOK (.ics)
+// =====================================================
+function genererRappelOutlook() {
+  const email    = document.getElementById('f-email-manager')?.value?.trim();
+  const prenom   = document.getElementById('f-prenom')?.value?.trim();
+  const dateEdpc = document.getElementById('f-date-edpc')?.value;
+
+  if (!email)    { showToast('⚠️ Renseignez d\'abord l\'email du manager'); return; }
+  if (!dateEdpc) { showToast('⚠️ Renseignez d\'abord la date de l\'EDPC'); return; }
+
+  // Créer l'événement la VEILLE de l'EDPC à 9h pour "Préparer l'EDPC"
+  const edpcDate = new Date(dateEdpc + 'T09:00:00');
+  const prepDate = new Date(edpcDate);
+  prepDate.setDate(prepDate.getDate() - 1); // Veille de l'EDPC
+  prepDate.setHours(9, 0, 0, 0);
+
+  const endDate = new Date(prepDate);
+  endDate.setMinutes(endDate.getMinutes() + 30);
+
+  const toICSDate = (d) =>
+    d.getFullYear().toString() +
+    String(d.getMonth() + 1).padStart(2,'0') +
+    String(d.getDate()).padStart(2,'0') +
+    'T' +
+    String(d.getHours()).padStart(2,'0') +
+    String(d.getMinutes()).padStart(2,'0') +
+    '00';
+
+  const uid = 'edpc-' + Date.now() + '@edpc-manager-idf';
+  const prenomCC = prenom || 'votre conseiller(ère)';
+  const edpcDateFR = new Date(dateEdpc).toLocaleDateString('fr-FR');
+
+  const icsContent = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//EDPC Manager IDF//FR',
+    'CALSCALE:GREGORIAN',
+    'METHOD:REQUEST',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${toICSDate(new Date())}`,
+    `DTSTART:${toICSDate(prepDate)}`,
+    `DTEND:${toICSDate(endDate)}`,
+    `SUMMARY:📋 Préparation EDPC – ${prenomCC}`,
+    `DESCRIPTION:Préparer l'EDPC de ${prenomCC} prévu le ${edpcDateFR}.\\n\\nPoints à préparer :\\n- Indicateurs de la période\\n- Bilan du PAC précédent\\n- Priorités à travailler\\n- Formulations feedback\\n\\nOutil EDPC Manager : ${window.location.href}`,
+    `ORGANIZER;CN=EDPC Manager:mailto:${email}`,
+    `ATTENDEE;ROLE=REQ-PARTICIPANT;RSVP=TRUE;CN=Manager:mailto:${email}`,
+    'CATEGORIES:EDPC,PREPARATION',
+    'STATUS:CONFIRMED',
+    'TRANSP:OPAQUE',
+    'BEGIN:VALARM',
+    'TRIGGER:-PT30M',
+    'ACTION:DISPLAY',
+    `DESCRIPTION:Rappel : préparation EDPC ${prenomCC}`,
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  // Télécharger le fichier .ics
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `Preparation_EDPC_${prenomCC.replace(/\s+/g,'_')}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast('📅 Fichier .ics téléchargé — ouvrez-le pour l\'ajouter à Outlook', 4000);
+}
+
+// =====================================================
+// UTILITAIRES
+// =====================================================
+function v(id){return document.getElementById(id)?.value?.trim()||'';}
+function getPrenom(){const val=v('f-prenom');if(!val)return '[Prénom CC]';return val.split(' ')[0];}
+function formatDate(s){if(!s)return '';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`;}
+function showToast(msg,dur=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+
+// ── Appréciations par type d'indicateur ─────────────────────────────────────
+const APPRECIATIONS = {
+  default:      ["en réussite","en progression","point de vigilance","à renforcer","en ligne avec l'objectif","en deçà de l'objectif"],
+  rebond:       ["en réussite","en progression","point de vigilance","à renforcer"],
+  sowee:        ["en progression","en recul","stable","à dynamiser"],
+  izi:          ["point fort","axe de travail","en progression","à renforcer"],
+  homiris:      ["point fort","axe de travail","en progression","à renforcer"],
+  sat:          ["satisfaisante","des axes de progrès identifiés","en amélioration","à surveiller"],
+  prod:         ["les objectifs sont atteints","un effort est nécessaire","en progression","à consolider"],
+  ipag:         ["en amélioration","nécessite un plan d'action renforcé","stable","priorité identifiée"],
+  rebonds:      ["en diminution conforme à l'objectif","effort à maintenir","stable","priorité de travail"],
+  qualite:      ["les critères sont respectés","des écarts ont été détectés","en amélioration","à surveiller"],
+  service:      ["en ligne avec l'objectif","axe à renforcer","en progression","point de vigilance"],
+  assurance:    ["objectif atteint","axe de progression identifié","en ligne","à dynamiser"],
+  gaz:          ["en avance","dans les objectifs","écart à résorber","à dynamiser"],
+  om:           ["performance satisfaisante","effort à maintenir","axe de progression identifié","en avance"],
+};
+
+function getAppreciations(phrase) {
+  const p = phrase.toLowerCase();
+  if(p.includes('rebond') && !p.includes('taux de rebond')) return APPRECIATIONS.rebond;
+  if(p.includes('sowee'))     return APPRECIATIONS.sowee;
+  if(p.includes('izi'))       return APPRECIATIONS.izi;
+  if(p.includes('homiris'))   return APPRECIATIONS.homiris;
+  if(p.includes('sat fo') || p.includes('sat bo')) return APPRECIATIONS.sat;
+  if(p.includes('prod bo') || p.includes('prod fo')) return APPRECIATIONS.prod;
+  if(p.includes('ipag'))      return APPRECIATIONS.ipag;
+  if(p.includes('taux de rebonds')) return APPRECIATIONS.rebonds;
+  if(p.includes('qualité'))   return APPRECIATIONS.qualite;
+  if(p.includes('service'))   return APPRECIATIONS.service;
+  if(p.includes('assurantiels')) return APPRECIATIONS.assurance;
+  if(p.includes('gaz'))       return APPRECIATIONS.gaz;
+  if(p.includes('ventes om')) return APPRECIATIONS.om;
+  return APPRECIATIONS.default;
+}
+
+// ── Popup fusionnée : % + Appréciation → injection simultanée Priorités + Auto-analyse ──
+let currentPctPhrase = '';
+
+function showPctPopup(phrase, btn) {
+  currentPctPhrase = phrase;
+  const existing = document.getElementById('pct-popup-overlay');
+  if(existing) existing.remove();
+
+  const label = phrase.replace('[X%]','').replace(/—.*$/,'').trim();
+  const appreciations = getAppreciations(phrase);
+  const cc = getPrenom();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'pct-popup-overlay';
+  overlay.className = 'pct-popup-overlay';
+  overlay.innerHTML = `<div class="pct-popup" style="max-width:500px" id="pct-popup-inner"></div>`;
+  document.body.appendChild(overlay);
+
+  const inner = document.getElementById('pct-popup-inner');
+  inner.innerHTML = `
+    <div class="pct-popup-label">${label}</div>
+    <div class="pct-popup-hint">Renseignez une seule fois — s'insère automatiquement dans les Priorités et l'Analyse Globale</div>
+
+    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap">
+      <div style="flex:0 0 130px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#78726a;display:block;margin-bottom:6px">Taux actuel</label>
+        <input class="pct-popup-input" id="pct-input" type="text" placeholder="ex : 14%" autocomplete="off" style="width:100%">
+      </div>
+      <div style="flex:1;min-width:200px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#78726a;display:block;margin-bottom:6px">Appréciation</label>
+        <div class="slot-suggestions" id="appreciation-chips" style="margin-bottom:6px"></div>
+        <input class="pct-popup-input" id="appr-input" type="text" placeholder="ou saisissez librement…" autocomplete="off" style="width:100%;font-size:13px;font-weight:400;text-align:left">
+      </div>
+    </div>
+
+    <div style="background:#f8f6f2;border-radius:8px;padding:10px 12px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#78726a;margin-bottom:4px">Prévisualisation</div>
+      <div id="pct-preview-prio" style="font-size:12.5px;color:#1d4ed8;margin-bottom:4px;font-style:italic"></div>
+      <div id="pct-preview-axe"  style="font-size:12.5px;color:#44403c;font-style:italic"></div>
+    </div>
+
+    <div class="pct-popup-row" style="justify-content:flex-end">
+      <button class="pct-popup-skip" onclick="skipPct()">Passer →</button>
+      <button class="pct-popup-ok"   onclick="confirmPct()">✓ Insérer</button>
+    </div>`;
+
+  // Chips d'appréciation
+  const chipsEl = document.getElementById('appreciation-chips');
+  appreciations.forEach(appr => {
+    const c = document.createElement('button');
+    c.type = 'button'; c.className = 'slot-chip'; c.textContent = appr;
+    c.onclick = () => {
+      document.getElementById('appr-input').value = appr;
+      updatePctPreview();
+    };
+    chipsEl.appendChild(c);
+  });
+
+  // Prévisualisation temps réel
+  const updatePctPreview = () => {
+    let pct  = document.getElementById('pct-input')?.value?.trim() || '';
+    let appr = document.getElementById('appr-input')?.value?.trim() || '';
+    if(pct && !pct.includes('%') && !isNaN(parseFloat(pct))) pct += '%';
+
+    // Phrase priorité
+    const prioPh = pct ? phrase.replace('[X%]', pct) : phrase;
+    document.getElementById('pct-preview-prio').textContent = '🎯 ' + prioPh;
+
+    // Phrase auto-analyse
+    const key = findManagerKey(phrase);
+    if(key && MANAGER_ANALYSE_MAP[key]){
+      let axePh = MANAGER_ANALYSE_MAP[key].replace(/\{CC\}/g, cc);
+      if(pct)  axePh = axePh.replace('[X%]', pct);
+      // Remplacer le contenu entre crochets de l'appréciation
+      if(appr) axePh = axePh.replace(/\[[^\]]+\/[^\]]+\]/g, appr);
+      document.getElementById('pct-preview-axe').textContent = '🧭 ' + axePh;
+    }
+  };
+
+  setTimeout(() => {
+    document.getElementById('pct-input')?.addEventListener('input', updatePctPreview);
+    document.getElementById('appr-input')?.addEventListener('input', updatePctPreview);
+    document.getElementById('pct-input')?.focus();
+    updatePctPreview();
+    document.getElementById('pct-input')?.addEventListener('keydown', e => {
+      if(e.key === 'Enter') confirmPct();
+      if(e.key === 'Escape') skipPct();
+    });
+  }, 50);
+
+  overlay.addEventListener('click', e => { if(e.target === overlay) skipPct(); });
+}
+
+function confirmPct() {
+  let pct  = document.getElementById('pct-input')?.value?.trim() || '';
+  let appr = document.getElementById('appr-input')?.value?.trim() || '';
+  if(pct && !pct.includes('%') && !isNaN(parseFloat(pct.replace(',','.')))) pct += '%';
+  document.getElementById('pct-popup-overlay')?.remove();
+
+  const phrase = currentPctPhrase;
+  const cc = getPrenom();
+
+  // 1. Insérer dans Priorités
+  const finalPrio = pct ? phrase.replace('[X%]', pct) : phrase;
+  const prioEl = document.getElementById('f-priorites');
+  if(prioEl){ prioEl.value += (prioEl.value.trim() ? '\n' : '') + finalPrio; prioEl.dispatchEvent(new Event('input')); }
+
+  // 2. Insérer dans Analyse Globale — phrase complète sans placeholder
+  const key = findManagerKey(phrase);
+  if(key && MANAGER_ANALYSE_MAP[key]){
+    let axePh = MANAGER_ANALYSE_MAP[key].replace(/\{CC\}/g, cc);
+    if(pct)  axePh = axePh.replace('[X%]', pct);
+    if(appr) axePh = axePh.replace(/\[[^\]]+\/[^\]]+\]/g, appr);
+    const axeEl = document.getElementById('f-axe');
+    if(axeEl && !axeEl.value.includes(axePh.slice(0,40))){
+      axeEl.value += (axeEl.value.trim() ? '\n' : '') + axePh;
+      axeEl.dispatchEvent(new Event('input'));
+    }
+  }
+
+  generatePreview();
+}
+
+function skipPct() {
+  document.getElementById('pct-popup-overlay')?.remove();
+  const phrase = currentPctPhrase;
+  const prioEl = document.getElementById('f-priorites');
+  if(prioEl){ prioEl.value += (prioEl.value.trim() ? '\n' : '') + phrase; prioEl.dispatchEvent(new Event('input')); }
+  generatePreview();
+}
+
+// ── appendToField ─────────────────────────────────────────────────────────────
+function appendToField(fieldId,text,btn){
+  const el=document.getElementById(fieldId);if(!el)return;
+  el.value+=(el.value.trim()?'\n':'')+text;el.dispatchEvent(new Event('input'));
+  if(btn){btn.classList.add('selected');setTimeout(()=>btn.classList.remove('selected'),800);}
+
+  // CCX uniquement → injection dans Analyse Globale
+  // (les priorités standard passent par confirmPct qui gère % + appréciation + injection)
+  if(fieldId==='f-priorites'){
+    const cc = getPrenom();
+    const ccxKey = Object.keys(CCX_ANALYSE_MAP).find(k => text.includes(k));
+    if(ccxKey){
+      const phrase = CCX_ANALYSE_MAP[ccxKey].replace(/\{CC\}/g, cc);
+      const axeEl = document.getElementById('f-axe');
+      if(axeEl && !axeEl.value.includes(phrase.slice(0,40))){
+        axeEl.value += (axeEl.value.trim()?'\n':'') + phrase;
+        axeEl.dispatchEvent(new Event('input'));
+      }
+    }
+  }
+
+  generatePreview();
+}
+
+function findManagerKey(text){
+  const t=text.toLowerCase();
+  const orderedKeys=[
+    "Ventes de service","Contrats assurantiels","Ventes GAZ en FO","Ventes OM en FO",
+    "Apports d'affaires Izi Confort by EDF","Apports d'affaires Izi by EDF",
+    "Apports d'affaires Homiris","Apports d'affaires Sowee",
+    "Diminution du taux d'IPAG","Diminution du taux de rebonds",
+    "Vente sur rebond","Qualité des ventes","Prod BO","Prod FO","Sat FO","Sat BO"
+  ];
+  return orderedKeys.find(k=>t.includes(k.toLowerCase()))||null;
+}
+
+function undoLastLine(fieldId,linkedFieldId){
+  const el=document.getElementById(fieldId);
+  if(!el||!el.value.trim()){showToast('Rien à annuler');return;}
+  const lines=el.value.split('\n');
+  let removedLine='';
+  for(let i=lines.length-1;i>=0;i--){if(lines[i].trim()){removedLine=lines[i];lines.splice(i,1);break;}}
+  while(lines.length&&!lines[lines.length-1].trim())lines.pop();
+  el.value=lines.join('\n');el.dispatchEvent(new Event('input'));
+  if(fieldId==='f-priorites'&&removedLine&&linkedFieldId){
+    const key=findManagerKey(removedLine);
+    if(key&&MANAGER_ANALYSE_MAP[key]){
+      const phrase=MANAGER_ANALYSE_MAP[key].slice(0,35);
+      const axeEl=document.getElementById(linkedFieldId);
+      if(axeEl){const axeLines=axeEl.value.split('\n').filter(l=>!l.includes(phrase));while(axeLines.length&&!axeLines[axeLines.length-1].trim())axeLines.pop();axeEl.value=axeLines.join('\n');axeEl.dispatchEvent(new Event('input'));}
+    }
+  }
+  generatePreview();showToast('↩ Dernière saisie annulée');
+}
+
+// =====================================================
+// CHIPS
+// =====================================================
+function renderAutoAnalyseChips(){
+  const el=document.getElementById('lib-autoanalyse');if(!el)return;
+  const prenom=getPrenom();el.innerHTML='';
+  LIBRARY["Auto-analyse CC"].forEach(phrase=>{
+    const btn=document.createElement('button');btn.className='lib-chip';
+    btn.textContent=`${prenom} ${phrase}`;
+    btn.onclick=()=>appendToField('f-autoanalyse',`${getPrenom()} ${phrase}`,btn);
+    el.appendChild(btn);
+  });
+}
+function renderManagerAxesChips(){
+  const el=document.getElementById('lib-axes');if(!el)return;
+  const prio=v('f-priorites');el.innerHTML='';
+  const cc=getPrenom();
+  Object.entries(MANAGER_ANALYSE_MAP).forEach(([key,phrase])=>{
+    if(prio&&!prio.toLowerCase().includes(key.toLowerCase()))return;
+    const display=phrase.replace(/\{CC\}/g,cc);
+    const btn=document.createElement('button');btn.className='lib-chip';btn.textContent=display;
+    btn.onclick=()=>{
+      // Détecter les placeholders [X%], [Y], [X], etc.
+      const slots=detectFeedbackPlaceholders(display);
+      if(slots.length>0){
+        showAxeResultPopup(display, slots);
+      } else {
+        appendToField('f-axe',display,btn);
+      }
+    };
+    el.appendChild(btn);
+  });
+}
+
+// =====================================================
+// SUGGESTIONS CONTEXTUELLES PAR TYPE DE CHAMP
+// =====================================================
+const SLOT_SUGGESTIONS = {
+  // Champs Analyse Globale
+  'X%':         ["8%","10%","12%","14%","15%","18%","20%","25%"],
+  'Y%':         ["10%","12%","15%","18%","20%","25%","30%"],
+  'X':          ["5","8","10","12","15","20"],
+  'Y':          ["8","10","12","15","20","25"],
+  // Champs feedback — axe
+  'axe':        ["la vente sur rebond","les apports Sowee","les apports Izi","la satisfaction client","la prod FO","la prod BO","la qualité des ventes","le taux de rebonds","les ventes GAZ","les ventes OM"],
+  // Champs feedback — observation / résultat
+  'observation': ["les indicateurs sont en hausse","le taux progresse régulièrement","les ventes rebond sont au-dessus de l'objectif","la posture de vente s'améliore","les engagements ont été tenus"],
+  'résultat':   ["une amélioration visible du taux","une progression de X pts sur l'indicateur","un meilleur positionnement sur les rebonds","des retours clients plus positifs"],
+  // Champs feedback — fait précis
+  'fait précis':["une bonne gestion des objections","une accroche rebond bien menée","un suivi client de qualité","une écoute active renforcée","une proposition claire et structurée"],
+  // Champs PAC
+  'indicateur': ["taux de vente rebond","apports Sowee","apports Izi","Sat FO","Sat BO","prod FO","prod BO","qualité des ventes","taux de rebonds"],
+  // Champs dates — pas de suggestions (champ date natif)
+  'date':       [],
+};
+
+// Renvoie les suggestions pour un label de slot donné
+function getSuggestions(label) {
+  const l = label.toLowerCase();
+  if(l.includes('date')) return [];
+  if(l === 'x%' || l === 'y%') return SLOT_SUGGESTIONS['X%'];
+  if(l === 'x' || l === 'y') return SLOT_SUGGESTIONS['X'];
+  return SLOT_SUGGESTIONS[label] || SLOT_SUGGESTIONS[l] || [];
+}
+
+// Injecte une suggestion dans un input et déclenche la prévisualisation
+function injectSuggestion(inputId, value, updateFn) {
+  const inp = document.getElementById(inputId);
+  if(inp){ inp.value = value; inp.dispatchEvent(new Event('input')); }
+  if(updateFn) updateFn();
+}
+let currentAxePhrase='';
+function showAxeResultPopup(phrase, slots){
+  currentAxePhrase=phrase;
+  const existing=document.getElementById('pct-popup-overlay');
+  if(existing)existing.remove();
+
+  const label=phrase.split(',')[0].replace(/^\s*(Sur|Les|Le|La)\s+/i,'').replace(/\{CC\}[^,]*/,'').trim();
+  const overlay=document.createElement('div');
+  overlay.id='pct-popup-overlay';
+  overlay.className='pct-popup-overlay';
+  overlay.innerHTML=`<div class="pct-popup" style="max-width:500px" id="axe-popup-inner"></div>`;
+  document.body.appendChild(overlay);
+
+  const inner=document.getElementById('axe-popup-inner');
+  inner.innerHTML=`<div class="pct-popup-label">${label}</div><div class="pct-popup-hint">Cliquez sur une suggestion ou saisissez librement</div>`;
+
+  slots.forEach((s,i)=>{
+    const suggestions=getSuggestions(s.label);
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;margin-bottom:10px';
+    wrap.innerHTML=`<label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:#78726a;display:block;margin-bottom:4px">${s.label}</label>`;
+    if(suggestions.length){
+      const row=document.createElement('div');row.className='slot-suggestions';
+      suggestions.forEach(sg=>{
+        const c=document.createElement('button');c.type='button';c.className='slot-chip';c.textContent=sg;
+        c.onclick=()=>{ document.getElementById(`axe-slot-${i}`).value=sg; updateAxePreview(); };
+        row.appendChild(c);
+      });
+      wrap.appendChild(row);
+    }
+    const inp=document.createElement('input');
+    inp.className='pct-popup-input';inp.id=`axe-slot-${i}`;
+    inp.type=s.label.toLowerCase().includes('date')?'date':'text';
+    inp.placeholder=s.label==='X%'||s.label==='Y%'?'ex : 14%':s.label;
+    inp.autocomplete='off';inp.style.width='100%';
+    inp.addEventListener('input',updateAxePreview);
+    wrap.appendChild(inp);
+    inner.appendChild(wrap);
+  });
+
+  const preview=document.createElement('div');
+  preview.id='axe-preview';preview.style.cssText='font-size:12px;color:#78726a;margin:8px 0;font-style:italic';
+  inner.appendChild(preview);
+
+  const row=document.createElement('div');row.className='pct-popup-row';row.style.justifyContent='flex-end';
+  row.innerHTML=`<button class="pct-popup-skip" onclick="skipAxePopup()">Passer →</button><button class="pct-popup-ok" onclick="confirmAxePopup()">✓ Insérer</button>`;
+  inner.appendChild(row);
+
+  setTimeout(()=>{ updateAxePreview(); document.getElementById('axe-slot-0')?.focus(); },50);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)skipAxePopup();});
+}
+
+function updateAxePreview(){
+  const slots=detectFeedbackPlaceholders(currentAxePhrase.replace(/\{CC\}/g,getPrenom()));
+  let result=currentAxePhrase.replace(/\{CC\}/g,getPrenom());
+  slots.forEach((s,i)=>{
+    let val=document.getElementById(`axe-slot-${i}`)?.value?.trim();
+    if(val&&(s.label==='X%'||s.label==='Y%')&&!val.includes('%')&&!isNaN(parseFloat(val)))val+='%';
+    result=result.replace(s.placeholder,val||s.placeholder);
+  });
+  const el=document.getElementById('axe-preview');
+  if(el)el.textContent='→ '+result;
+}
+
+function confirmAxePopup(){
+  const phrase=currentAxePhrase.replace(/\{CC\}/g,getPrenom());
+  const slots=detectFeedbackPlaceholders(phrase);
+  let result=phrase;
+  slots.forEach((s,i)=>{
+    let val=document.getElementById(`axe-slot-${i}`)?.value?.trim();
+    if(val){
+      if((s.label==='X%'||s.label==='Y%')&&!val.includes('%')&&!isNaN(parseFloat(val)))val+='%';
+      result=result.replace(s.placeholder,val);
+    }
+  });
+  document.getElementById('pct-popup-overlay')?.remove();
+  appendToField('f-axe',result,null);
+}
+
+function skipAxePopup(){
+  document.getElementById('pct-popup-overlay')?.remove();
+  appendToField('f-axe',currentAxePhrase.replace(/\{CC\}/g,getPrenom()),null);
+}
+// Détecte les placeholders dans une phrase de feedback
+function detectFeedbackPlaceholders(phrase) {
+  const slots = [];
+  // Patterns : [axe], [X%], [Y%], [observation], [résultat], [fait précis], [date], [indicateur], [qualité]
+  const regex = /\[([^\]]+)\]/g;
+  let m;
+  while ((m = regex.exec(phrase)) !== null) {
+    slots.push({ placeholder: m[0], label: m[1] });
+  }
+  return slots;
+}
+
+let currentFeedbackPhrase = '';
+
+function renderFeedbackChips(){
+  const el=document.getElementById('lib-feedback');if(!el)return;
+  el.innerHTML='';
+  const prenom=getPrenom();
+
+  // Afficher UNIQUEMENT la bibliothèque de l'onglet actif
+  // Si aucun onglet actif → afficher toutes les catégories
+  const cats = activeFeedbackTab
+    ? [`Feedback — ${activeFeedbackTab==='progression'?'En progression':activeFeedbackTab==='stagnation'?'En stagnation':'Engagements non atteints'}`]
+    : ['Feedback — En progression','Feedback — En stagnation','Feedback — Engagements non atteints'];
+
+  cats.forEach(cat=>{
+    const sit=cat.includes('En progression')?'progression':cat.includes('stagnation')?'stagnation':'non-atteinte';
+    (LIBRARY[cat]||[]).forEach(phrase=>{
+      const display=phrase.replace(/\[Prénom\]/g,prenom);
+      const btn=document.createElement('button');btn.className='lib-chip';btn.textContent=display;
+      btn.onclick=()=>{
+        const slots=detectFeedbackPlaceholders(display);
+        if(slots.length>0){
+          showFeedbackResultPanel(display,slots,prenom,sit);
+        } else {
+          addToFeedbackStaging(display,sit);
+          hideFeedbackResultPanel();
+          btn.classList.add('selected');
+          setTimeout(()=>btn.classList.remove('selected'),800);
+        }
+      };
+      el.appendChild(btn);
+    });
+  });
+}
+
+function applyFeedbackResults() {
+  if(!currentFeedbackPhrase) return;
+  let result = currentFeedbackPhrase;
+  const slots = detectFeedbackPlaceholders(currentFeedbackPhrase);
+  slots.forEach((slot, i) => {
+    const val = document.getElementById(`fr-slot-${i}`)?.value?.trim();
+    if(val) result = result.replace(slot.placeholder, val);
+  });
+  // Ajouter au staging au lieu d'injecter directement dans f-feedback
+  const sit = currentSituation || 'progression';
+  addToFeedbackStaging(result, sit);
+  hideFeedbackResultPanel();
+}
+function showFeedbackResultPanel(phrase, slots, prenom, sit) {
+  currentFeedbackPhrase = phrase;
+  const panel  = document.getElementById('feedback-result-panel');
+  const fields = document.getElementById('feedback-result-fields');
+  if(!panel || !fields) return;
+
+  fields.innerHTML = '';
+  const previewEl = document.getElementById('feedback-result-preview');
+
+  const updatePreview = () => {
+    let result = phrase;
+    slots.forEach((slot, i) => {
+      const val = document.getElementById(`fr-slot-${i}`)?.value?.trim();
+      result = result.replace(slot.placeholder, val || slot.placeholder);
+    });
+    if(previewEl) previewEl.textContent = '→ ' + result;
+  };
+
+  slots.forEach((slot, i) => {
+    const suggestions = getSuggestions(slot.label);
+    const wrap = document.createElement('div');
+    wrap.className = 'form-group';
+    wrap.style.marginBottom = '10px';
+    const lbl = document.createElement('label');
+    lbl.textContent = slot.label;
+    wrap.appendChild(lbl);
+    if(suggestions.length) {
+      const row = document.createElement('div');
+      row.className = 'slot-suggestions';
+      suggestions.forEach(sg => {
+        const c = document.createElement('button');
+        c.type = 'button'; c.className = 'slot-chip'; c.textContent = sg;
+        c.onclick = () => { document.getElementById(`fr-slot-${i}`).value = sg; updatePreview(); };
+        row.appendChild(c);
+      });
+      wrap.appendChild(row);
+    }
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.id = `fr-slot-${i}`;
+    inp.placeholder = slot.label; inp.autocomplete = 'off';
+    inp.addEventListener('input', updatePreview);
+    wrap.appendChild(inp);
+    fields.appendChild(wrap);
+  });
+
+  setTimeout(() => { updatePreview(); document.getElementById('fr-slot-0')?.focus(); }, 50);
+  panel.classList.add('visible');
+}
+
+function hideFeedbackResultPanel() {
+  const panel = document.getElementById('feedback-result-panel');
+  if(panel) panel.classList.remove('visible');
+  currentFeedbackPhrase = '';
+}
+// =====================================================
+// CULTURE VENTE — panneau PAC (chips simples → insertion directe)
+// =====================================================
+const PAC_CV_TECHNIQUES = [
+  {key:'BAC',         label:'💡 Méthode BAC'},
+  {key:'AREF',        label:'🔄 Méthode AREF'},
+  {key:'posture',     label:'🤝 Posture conseil & confiance'},
+  {key:'ecoute',      label:'👂 Écoute & questionnement'},
+  {key:'objections',  label:'🛡️ Traitement des objections'},
+  {key:'SONCASE',     label:'🎯 Méthode SONCASE'},
+];
+
+function toggleAxeCultureVente() {
+  const panel = document.getElementById('axe-cv-panel');
+  if(!panel) return;
+  const isVisible = panel.style.display !== 'none';
+  if(isVisible){ panel.style.display='none'; return; }
+  const list = document.getElementById('axe-cv-chips-list');
+  if(list && !list.children.length){
+    PAC_CV_TECHNIQUES.forEach(tech=>{
+      const btn=document.createElement('button');
+      btn.className='lib-chip';
+      btn.style.cssText='border-color:#eab308;color:#713f12;background:#fff;font-weight:600';
+      btn.textContent=tech.label;
+      btn.onclick=()=>{
+        const cc=getPrenom();
+        const phrase=`Culture Vente — observation sur ${tech.label.replace(/^[^\w]*/,'')} : ${cc} démontre une maîtrise [à préciser] sur cette technique — à valoriser / à renforcer dans le cadre de cet EDPC.`;
+        appendToField('f-axe', phrase, btn);
+        panel.style.display='none';
+        showToast(`✅ Observation Culture Vente insérée dans l'Analyse Globale`);
+      };
+      list.appendChild(btn);
+    });
+  }
+  panel.style.display='block';
+}
+
+function togglePacCultureVente() {
+  const panel = document.getElementById('pac-cv-panel');
+  if(!panel) return;
+  const isVisible = panel.style.display !== 'none';
+  if(isVisible){ panel.style.display='none'; return; }
+  // Construire les chips au premier affichage
+  const list = document.getElementById('pac-cv-chips-list');
+  if(list && !list.children.length){
+    PAC_CV_TECHNIQUES.forEach(tech=>{
+      const btn=document.createElement('button');
+      btn.className='lib-chip';
+      btn.style.cssText='border-color:#eab308;color:#713f12;background:#fff;font-weight:600';
+      btn.textContent=tech.label;
+      btn.onclick=()=>{
+        const cc=getPrenom();
+        const phrase=`Apport Culture Vente — travail sur ${tech.label.replace(/^[^\w]*/,'')} avec ${cc} : mise en pratique et évaluation lors du prochain EDPC.`;
+        appendToField('f-pac-action', phrase, btn);
+        panel.style.display='none';
+        showToast(`✅ Action ${tech.label} insérée dans le PAC`);
+      };
+      list.appendChild(btn);
+    });
+  }
+  panel.style.display='block';
+}
+
+function renderPacChips(){
+  const el=document.getElementById('lib-pac');if(!el)return;el.innerHTML='';
+  LIBRARY["Plan d'action (PAC)"].forEach(phrase=>{
+    const btn=document.createElement('button');btn.className='lib-chip';btn.textContent=phrase;
+    btn.onclick=()=>{
+      const slots = detectFeedbackPlaceholders(phrase); // même fonction, détecte [date],[X%], etc.
+      if(slots.length > 0){
+        showPacResultPanel(phrase, slots);
+      } else {
+        appendToField('f-pac-action', phrase, btn);
+        hidePacResultPanel();
+      }
+    };
+    el.appendChild(btn);
+  });
+}
+
+function showPacResultPanel(phrase, slots) {
+  currentPacPhrase = phrase;
+  const panel  = document.getElementById('pac-result-panel');
+  const fields = document.getElementById('pac-result-fields');
+  if(!panel || !fields) return;
+
+  fields.innerHTML = '';
+  slots.forEach((slot, i) => {
+    const fg = document.createElement('div');
+    fg.className = 'form-group';
+    // Adapter le placeholder selon le type de slot
+    let inputType = 'text';
+    let inputPlaceholder = slot.label;
+    if(slot.label.toLowerCase().includes('date')) { inputType = 'date'; inputPlaceholder = ''; }
+    if(slot.label.toLowerCase().includes('%') || slot.label === 'X%' || slot.label === 'Y%') { inputPlaceholder = 'ex : 14%'; }
+    fg.innerHTML = `<label>${slot.label}</label><input type="${inputType}" id="pc-slot-${i}" placeholder="${inputPlaceholder}" autocomplete="off">`;
+    fields.appendChild(fg);
+  });
+
+  const previewEl = document.getElementById('pac-result-preview');
+  const updatePreview = () => {
+    let result = phrase;
+    slots.forEach((slot, i) => {
+      let val = document.getElementById(`pc-slot-${i}`)?.value?.trim();
+      // Auto-ajouter % si champ numérique et pas déjà présent
+      if(val && (slot.label==='X%' || slot.label==='Y%') && !val.includes('%') && !isNaN(parseFloat(val))) val += '%';
+      result = result.replace(slot.placeholder, val || slot.placeholder);
+    });
+    if(previewEl) previewEl.textContent = '→ ' + result;
+  };
+
+  setTimeout(() => {
+    slots.forEach((_, i) => {
+      const inp = document.getElementById(`pc-slot-${i}`);
+      if(inp){ inp.addEventListener('input', updatePreview); if(i===0) inp.focus(); }
+    });
+    updatePreview();
+  }, 50);
+
+  panel.classList.add('visible');
+}
+
+function applyPacResults() {
+  const fields = document.getElementById('pac-result-fields');
+  if(!fields || !currentPacPhrase) return;
+
+  let result = currentPacPhrase;
+  const slots = detectFeedbackPlaceholders(currentPacPhrase);
+  slots.forEach((slot, i) => {
+    let val = document.getElementById(`pc-slot-${i}`)?.value?.trim();
+    if(val){
+      // Auto-ajouter % si besoin
+      if((slot.label==='X%'||slot.label==='Y%') && !val.includes('%') && !isNaN(parseFloat(val))) val += '%';
+      // Formatter la date en français si c'est un champ date
+      if(slot.label.toLowerCase().includes('date') && val.match(/^\d{4}-\d{2}-\d{2}$/)){
+        const [y,m,d] = val.split('-'); val = `${d}/${m}/${y}`;
+      }
+      result = result.replace(slot.placeholder, val);
+    }
+  });
+
+  appendToField('f-pac-action', result, null);
+  hidePacResultPanel();
+}
+
+function hidePacResultPanel() {
+  const panel = document.getElementById('pac-result-panel');
+  if(panel) panel.classList.remove('visible');
+  currentPacPhrase = '';
+}
+function renderCCXChips(){
+  const el=document.getElementById('lib-ccx');if(!el)return;el.innerHTML='';
+  LIBRARY["Missionnement CCX"].forEach(phrase=>{
+    const btn=document.createElement('button');btn.className='lib-chip ccx';btn.textContent=phrase;
+    // CCX s'insère dans priorités ET déclenche l'injection dans Analyse Globale
+    btn.onclick=()=>appendToField('f-priorites',phrase,btn);
+    el.appendChild(btn);
+  });
+}
+function renderSimpleChips(cat,cid,fid){
+  const el=document.getElementById(cid);if(!el)return;el.innerHTML='';
+  (LIBRARY[cat]||[]).forEach(phrase=>{const btn=document.createElement('button');btn.className='lib-chip';btn.textContent=phrase;btn.onclick=()=>appendToField(fid,phrase,btn);el.appendChild(btn);});
+}
+function renderLibrary(){
+  renderPrioriteChips();   // priorités avec popup %
+  renderCCXChips();
+  renderManagerAxesChips();renderAutoAnalyseChips();renderFeedbackChips();renderPacChips();
+}
+
+// ── Chips Priorités avec popup de saisie % ──────────────────────────────────
+function renderPrioriteChips(){
+  const el=document.getElementById('lib-priorites');if(!el)return;el.innerHTML='';
+  LIBRARY["Priorités identifiées"].forEach(phrase=>{
+    const btn=document.createElement('button');btn.className='lib-chip';btn.textContent=phrase;
+    const hasPct=phrase.includes('[X%]');
+    btn.onclick=()=>{
+      if(hasPct) showPctPopup(phrase, btn);
+      else appendToField('f-priorites',phrase,btn);
+    };
+    el.appendChild(btn);
+  });
+}
+
+// =====================================================
+// FEEDBACK — MULTI-SÉLECTION + STAGING
+// =====================================================
+// =====================================================
+// FEEDBACK — ARCHITECTURE EN ONGLETS
+// État global des phrases sélectionnées (toutes catégories)
+// Bibliothèque affichée = locale à l'onglet actif
+// =====================================================
+let activeFeedbackTab = null;  // 'progression' | 'stagnation' | 'non-atteinte' | null
+let feedbackStagingLines = []; // état global — persist entre changements d'onglet
+
+// Sélectionner un onglet = afficher sa bibliothèque uniquement
+function selectFeedbackTab(sit, btn) {
+  // Si déjà actif → désactiver (toggle off)
+  if(activeFeedbackTab === sit){
+    activeFeedbackTab = null;
+    currentSituation  = null;
+    document.querySelectorAll('.sit-btn').forEach(b => b.classList.remove('active-prog','active-stag','active-non'));
+  } else {
+    // Changer d'onglet → remplacer la bibliothèque, NE PAS toucher au staging
+    activeFeedbackTab = sit;
+    currentSituation  = sit;
+    document.querySelectorAll('.sit-btn').forEach(b => b.classList.remove('active-prog','active-stag','active-non'));
+    const cls = sit==='progression'?'active-prog':sit==='stagnation'?'active-stag':'active-non';
+    btn.classList.add(cls);
+  }
+  hideFeedbackResultPanel();
+  renderFeedbackChips(); // affiche uniquement la bibliothèque de l'onglet actif
+  generatePreview();
+}
+
+// Alias de compatibilité pour le code existant (reset, setFormData…)
+function setSituation(sit) {
+  activeFeedbackTab = sit || null;
+  currentSituation  = sit || null;
+  document.querySelectorAll('.sit-btn').forEach(b => b.classList.remove('active-prog','active-stag','active-non','s-prog','s-stag','s-non'));
+  if(sit){
+    const map={progression:['sit-prog','active-prog'],stagnation:['sit-stag','active-stag'],'non-atteinte':['sit-non','active-non']};
+    const[id,cls]=map[sit]||[];
+    if(id) document.getElementById(id)?.classList.add(cls);
+  }
+  hideFeedbackResultPanel();
+  renderFeedbackChips();
+}
+
+// Alias pour compatibilité (anciens appels toggleSituation)
+function setSituation(sit) {
+  activeFeedbackTab = sit || null;
+  currentSituation  = sit || null;
+  document.querySelectorAll('.sit-btn').forEach(b => b.classList.remove('active-prog','active-stag','active-non','s-prog','s-stag','s-non'));
+  if(sit){
+    const map={progression:['sit-prog','active-prog'],stagnation:['sit-stag','active-stag'],'non-atteinte':['sit-non','active-non']};
+    const[id,cls]=map[sit]||[];
+    if(id) document.getElementById(id)?.classList.add(cls);
+  }
+  hideFeedbackResultPanel();
+  renderFeedbackChips();
+}
+
+function toggleSituation(sit, btn){ selectFeedbackTab(sit, btn); }
+
+// Ajouter une ligne dans la zone de staging (au lieu d'injecter directement dans f-feedback)
+function addToFeedbackStaging(text, situation) {
+  feedbackStagingLines.push({text, situation});
+  renderFeedbackStaging();
+  // Montrer zone staging + bouton valider
+  const staging = document.getElementById('feedback-staging');
+  const wrap    = document.getElementById('feedback-validate-wrap');
+  if(staging) staging.classList.add('visible');
+  if(wrap)    wrap.style.display = 'block';
+}
+
+function renderFeedbackStaging() {
+  const el = document.getElementById('feedback-staging-lines');
+  if(!el) return;
+  if(!feedbackStagingLines.length){
+    el.innerHTML = '<div class="feedback-staging-empty">Sélectionnez des formules ci-dessus pour les voir apparaître ici…</div>';
+    return;
+  }
+  el.innerHTML = '';
+  feedbackStagingLines.forEach((item, i) => {
+    const tagClass = item.situation==='progression'?'tag-prog':item.situation==='stagnation'?'tag-stag':'tag-non';
+    const tagLabel = item.situation==='progression'?'Progression':item.situation==='stagnation'?'Stagnation':'Non atteint';
+    const div = document.createElement('div');
+    div.className = 'feedback-staging-line';
+    div.innerHTML = `<span class="feedback-staging-line-tag ${tagClass}">${tagLabel}</span><span style="flex:1">${item.text}</span><button class="feedback-staging-del" onclick="removeStagingLine(${i})" title="Supprimer">✕</button>`;
+    el.appendChild(div);
+  });
+}
+
+function removeStagingLine(i) {
+  feedbackStagingLines.splice(i, 1);
+  renderFeedbackStaging();
+  if(!feedbackStagingLines.length){
+    document.getElementById('feedback-staging')?.classList.remove('visible');
+    const wrap = document.getElementById('feedback-validate-wrap');
+    if(wrap) wrap.style.display = 'none';
+  }
+}
+
+function clearFeedbackStaging() {
+  feedbackStagingLines = [];
+  renderFeedbackStaging();
+  document.getElementById('feedback-staging')?.classList.remove('visible');
+  const wrap = document.getElementById('feedback-validate-wrap');
+  if(wrap) wrap.style.display = 'none';
+}
+
+function validateFeedbackStaging() {
+  if(!feedbackStagingLines.length) { showToast('⚠️ Ajoutez des formules avant d\'insérer'); return; }
+  const text = feedbackStagingLines.map(l => l.text).join('\n');
+  const fbEl = document.getElementById('f-feedback');
+  if(fbEl){
+    fbEl.value += (fbEl.value.trim() ? '\n' : '') + text;
+    fbEl.dispatchEvent(new Event('input'));
+  }
+  clearFeedbackStaging();
+  hideFeedbackResultPanel();
+  updateCompletude();
+  generatePreview();
+  showToast('✅ Feedback inséré dans le traçage');
+}
+
+// =====================================================
+// PREVIEW
+// =====================================================
+function generatePreview(){
+  const crc=selectedCRC||'[CRC]',ccFull=v('f-prenom')||'[Conseiller]',cc=getPrenom();
+  const mgr=v('f-manager')||'[Manager]',dateEdpc=formatDate(v('f-date-edpc'))||'[date EDPC]';
+  const semaine=v('f-semaine-edpc')?` (${v('f-semaine-edpc').replace('-W',' S')})`:'' ;
+  const per=v('f-periode')?`${v('f-periode')} ${v('f-annee')}`:'[période]';
+  const priorites=v('f-priorites'),autoanalyse=v('f-autoanalyse'),feedback=v('f-feedback');
+  const feedbackDate=formatDate(v('f-feedback-date'));
+  const feedbackSem=v('f-feedback-semaine')?` (${v('f-feedback-semaine').replace('-W',' S')})`:'' ;
+  const axe=v('f-axe'),pacAction=v('f-pac-action'),pacEngMgr=v('f-pac-eng-mgr');
+  let L=[];
+  L.push(`📋 TRAÇAGE EDPC — CRC ${crc}`);
+  L.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  L.push(`Conseiller : ${ccFull}`);L.push(`Manager    : ${mgr}`);
+  L.push(`Date EDPC  : ${dateEdpc}${semaine}   |   Période : ${per}`);L.push('');
+  if(priorites){L.push(`🎯 PRIORITÉS IDENTIFIÉES`);priorites.split('\n').forEach(l=>l.trim()&&L.push(`   • ${l.trim()}`));L.push('');}
+  if(axe){L.push(`🧭 ANALYSE GLOBALE`);axe.split('\n').forEach(l=>l.trim()&&L.push(`   ${l.trim()}`));L.push('');}
+  if(pacAction){L.push(`📋 PLAN D'ACTION ET DE COACHING (PAC)`);pacAction.split('\n').forEach(l=>l.trim()&&L.push(`   → ${l.trim()}`));if(pacEngMgr)L.push(`   Engagement manager : ${pacEngMgr}`);L.push('');}
+  if(feedback||feedbackDate){
+    const sl=currentSituation==='progression'?' — EN PROGRESSION':currentSituation==='stagnation'?' — EN STAGNATION':currentSituation==='non-atteinte'?' — ENGAGEMENTS NON ATTEINTS':'';
+    L.push(`🔁 FEEDBACK MANAGER${sl}`);
+    if(feedback)feedback.split('\n').forEach(l=>l.trim()&&L.push(`   ${l.trim()}`));
+    if(feedbackDate)L.push(`   Prochain EDPC : ${feedbackDate}${feedbackSem}`);
+    L.push('');
+  }
+  if(autoanalyse){L.push(`💬 AUTO-ANALYSE DU CC`);autoanalyse.split('\n').forEach(l=>l.trim()&&L.push(`   ${l.trim()}`));L.push('');}
+  L.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  L.push(`Traçage généré via EDPC Manager · IDF`);
+  document.getElementById('preview-text').textContent=L.join('\n');
+  updateCompletude();scheduleDraftSave();
+  renderManagerAxesChips();renderFeedbackChips();
+}
+
+// =====================================================
+// COMPLÉTUDE
+// =====================================================
+function updateCompletude(){
+  const isVisible = (cardId) => {
+    const el=document.getElementById(cardId);
+    return !el||!el.classList.contains('brique-hidden');
+  };
+  const checks=[
+    !!v('f-manager'),!!v('f-prenom'),!!v('f-date-edpc'),!!v('f-periode'),
+    isVisible('card-priorites')   ? !!v('f-priorites')   : true,
+    isVisible('card-autoanalyse') ? !!v('f-autoanalyse') : true,
+    isVisible('card-pac')         ? !!v('f-pac-action')  : true,
+    isVisible('card-feedback')    ? !!v('f-feedback')    : true,
+    isVisible('card-axe')         ? !!v('f-axe')         : true,
+  ];
+  const pct=Math.round(checks.filter(Boolean).length/checks.length*100);
+  document.getElementById('completude-fill').style.width=pct+'%';
+  document.getElementById('completude-pct').textContent=pct+'%';
+  const col=pct<40?'#9a3412':pct<75?'#92400e':'#166534';
+  document.getElementById('completude-fill').style.background=col;
+  document.getElementById('completude-pct').style.color=col;
+
+  // Points rouges uniquement sur les briques visibles et incomplètes
+  const cardChecks=[
+    {id:'card-priorites',   ok:!!v('f-priorites')},
+    {id:'card-axe',         ok:!!v('f-axe')},
+    {id:'card-pac',         ok:!!v('f-pac-action')},
+    {id:'card-feedback',    ok:!!v('f-feedback')},
+    {id:'card-autoanalyse', ok:!!v('f-autoanalyse')},
+  ];
+  cardChecks.forEach(({id,ok})=>{
+    const card=document.getElementById(id);
+    if(!card)return;
+    if(card.classList.contains('brique-hidden')) card.classList.remove('incomplete');
+    else card.classList.toggle('incomplete',!ok);
+  });
+
+  // Blocage bouton Copier
+  const visibleMandatory=cardChecks.filter(({id})=>isVisible(id));
+  const allOk=visibleMandatory.every(({ok})=>ok)&&!!v('f-manager')&&!!v('f-prenom');
+  const copyBtn=document.getElementById('copy-btn');
+  const incMsg=document.getElementById('incomplete-msg');
+  if(copyBtn){copyBtn.style.opacity=allOk?'1':'0.45';copyBtn.style.cursor=allOk?'pointer':'not-allowed';copyBtn.title=allOk?'':'Complétez toutes les briques obligatoires avant de copier';}
+  if(incMsg)incMsg.style.display=allOk?'none':'block';
+}
+
+// =====================================================
+// COPY / SAVE / DRAFT
+// =====================================================
+function copyText(){
+  // Vérifier complétude avant copie
+  const mandatory=['f-priorites','f-axe','f-pac-action','f-feedback','f-autoanalyse'];
+  const missing=mandatory.filter(id=>!v(id));
+  if(missing.length>0){showToast('⚠️ Complétez toutes les briques obligatoires (🔴) avant de copier',3500);return;}
+
+  navigator.clipboard.writeText(document.getElementById('preview-text').textContent).then(()=>{
+    const btn=document.getElementById('copy-btn');btn.textContent='✅ Copié !';btn.classList.add('copied');
+    setTimeout(()=>{btn.innerHTML='📋 Copier le traçage';btn.classList.remove('copied');},2200);
+    showToast('✅ Traçage copié dans le presse-papier');
+  });
+}
+function getFormData(){
+  return{crc:selectedCRC||'',manager:v('f-manager'),prenom:v('f-prenom'),
+    periode:v('f-periode'),annee:v('f-annee'),dateEdpc:v('f-date-edpc'),semaineEdpc:v('f-semaine-edpc'),
+    priorites:v('f-priorites'),axe:v('f-axe'),autoanalyse:v('f-autoanalyse'),
+    feedback:v('f-feedback'),feedbackDate:v('f-feedback-date'),feedbackSemaine:v('f-feedback-semaine'),
+    pacAction:v('f-pac-action'),pacEngMgr:v('f-pac-eng-mgr'),situation:currentSituation,
+    ambition:v('f-ambition')||''};
+}
+function setFormData(d){
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
+
+  // Étape 1 — CRC + peuplement managers
+  if(d.crc){
+    selectedCRC=d.crc;
+    const badge=document.getElementById('hdr-crc-badge');
+    if(badge){badge.textContent=d.crc;badge.className='hdr-badge hdr-'+d.crc.toLowerCase();}
+    populateManagersForCRC(d.crc);
+  }
+
+  // Étape 2 — Sélection manager + peuplement CC (délai 120ms pour laisser le DOM se mettre à jour)
+  setTimeout(()=>{
+    const mgrEl=document.getElementById('f-manager');
+    if(mgrEl && d.manager){
+      // Vérifier que l'option existe avant de la sélectionner
+      const opt=[...mgrEl.options].find(o=>o.value===d.manager);
+      if(opt) mgrEl.value=d.manager;
+      onManagerChange();
+    }
+
+    // Étape 3 — Sélection CC + tous les autres champs (délai 200ms supplémentaires)
+    setTimeout(()=>{
+      const ccEl=document.getElementById('f-prenom');
+      if(ccEl && d.prenom){
+        const opt=[...ccEl.options].find(o=>o.value===d.prenom);
+        if(opt) ccEl.value=d.prenom;
+      }
+      set('f-periode',d.periode);
+      set('f-annee',d.annee||'2026');
+      set('f-date-edpc',d.dateEdpc);
+      set('f-semaine-edpc',d.semaineEdpc);
+      set('f-priorites',d.priorites);
+      set('f-axe',d.axe);
+      set('f-autoanalyse',d.autoanalyse);
+      set('f-feedback',d.feedback);
+      set('f-feedback-date',d.feedbackDate);
+      set('f-feedback-semaine',d.feedbackSemaine);
+      set('f-pac-action',d.pacAction);
+      set('f-pac-eng-mgr',d.pacEngMgr);
+      if(d.situation) setSituation(d.situation);
+      renderAutoAnalyseChips();
+      renderManagerAxesChips();
+      generatePreview();
+    }, 200);
+  }, 120);
+}
+function scheduleDraftSave(){
+  if(isDemoMode)return;
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer=setTimeout(()=>{try{localStorage.setItem('edpc_draft',JSON.stringify(getFormData()));setSaveIndicator(true);}catch(e){}},1500);
+}
+function loadDraft(){try{const raw=localStorage.getItem('edpc_draft');if(!raw)return;setFormData(JSON.parse(raw));setSaveIndicator(true);}catch(e){}}
+function setSaveIndicator(saved){const el=document.getElementById('save-indicator'),lbl=document.getElementById('save-label');el.classList.toggle('saved',saved);lbl.textContent=saved?'Brouillon sauvegardé':'Non sauvegardé';}
+
+function saveTracage(){
+  if(isDemoMode){showToast('🎬 Mode démo — sauvegarde désactivée');return;}
+  const prenom=v('f-prenom'),crc=selectedCRC;
+  if(!prenom&&!crc){showToast('⚠️ Renseignez au moins le CRC et le conseiller');return;}
+  const tracage={id:Date.now(),date:new Date().toLocaleDateString('fr-FR'),
+    quarter:v('f-periode')+' '+v('f-annee'),
+    month:new Date().toISOString().slice(0,7),
+    prenom:v('f-prenom')||'—',prenomCourt:getPrenom(),crc:crc||'—',
+    manager:v('f-manager')||'—',periode:v('f-periode')?`${v('f-periode')} ${v('f-annee')}`:'—',
+    situation:currentSituation,ambition:v('f-ambition')||'',
+    text:document.getElementById('preview-text').textContent,data:getFormData()};
+  try{
+    const hist=JSON.parse(localStorage.getItem('edpc_history')||'[]');
+    hist.unshift(tracage);if(hist.length>50)hist.splice(50);
+    localStorage.setItem('edpc_history',JSON.stringify(hist));
+    localStorage.removeItem('edpc_draft');setSaveIndicator(false);
+    showToast('💾 Traçage sauvegardé');renderHistorique();
+  }catch(e){showToast('❌ Erreur de sauvegarde');}
+}
+
+// =====================================================
+// HISTORIQUE
+// =====================================================
+function getHistory(){
+  if(isDemoMode){
+    try{ return JSON.parse(sessionStorage.getItem('edpc_demo_history')||'[]'); }catch(e){return [];}
+  }
+  try{ return JSON.parse(localStorage.getItem('edpc_history')||'[]'); }catch(e){return [];}
+}
+
+function renderHistorique(){
+  const c=document.getElementById('hist-container');if(!c)return;
+  try{
+    const hist=getHistory();
+    if(!hist.length){
+      c.innerHTML=`<div class="hist-empty"><div class="hist-empty-icon">📂</div><p>Aucun traçage sauvegardé.</p></div>`;
+      return;
+    }
+    c.innerHTML='';
+    const list=document.createElement('div');list.className='hist-list';
+    hist.forEach(item=>{
+      const sc=item.situation==='progression'?'sit-tag-prog':item.situation==='stagnation'?'sit-tag-stag':item.situation==='non-atteinte'?'sit-tag-non':'sit-tag-none';
+      const sl=item.situation==='progression'?'✅ Progression':item.situation==='stagnation'?'⚠️ Stagnation':item.situation==='non-atteinte'?'🔴 Non atteint':'—';
+      const demoLabel=isDemoMode?'<span style="background:#f5f3ff;color:#7c3aed;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px">DÉMO</span>':'';
+      // En mode démo : seulement bouton EDPC suivant
+      const actionBtns=isDemoMode
+        ?`<button class="hist-btn next" onclick="loadEdpcSuivant(${item.id})">🔄 EDPC suivant</button>`
+        :`<button class="hist-btn next" onclick="loadEdpcSuivant(${item.id})">🔄 EDPC suivant</button><button class="hist-btn" onclick="reloadTracage(${item.id})">📂 Recharger</button><button class="hist-btn" onclick="copyHistItem(${item.id})">📋 Copier</button><button class="hist-btn danger" onclick="deleteHistItem(${item.id})">✕</button>`;
+      const div=document.createElement('div');div.className='hist-item';
+      div.innerHTML=`<div class="hist-item-info"><div class="hist-item-name">${item.prenom}${demoLabel} <span style="color:var(--text-muted);font-weight:400">· CRC ${item.crc}</span></div><div class="hist-item-meta">Le ${item.date} · ${item.periode} · Manager : ${item.manager}</div></div><span class="hist-item-sit ${sc}">${sl}</span><div class="hist-actions">${actionBtns}</div>`;
+      list.appendChild(div);
+    });
+    c.appendChild(list);
+    if(isDemoMode){
+      const tip=document.createElement('div');
+      tip.className='alert';tip.style.marginTop='12px';
+      tip.innerHTML='🎬 <strong>Mode démonstration</strong> — Cliquez sur "🔄 EDPC suivant" pour voir la fonctionnalité de continuité en action.';
+      c.appendChild(tip);
+    }
+  }catch(e){}
+}
+function getHistItem(id){return getHistory().find(x=>x.id===id);}
+function copyHistItem(id){const i=getHistItem(id);if(!i)return;navigator.clipboard.writeText(i.text).then(()=>showToast('📋 Copié !'));}
+function reloadTracage(id){const i=getHistItem(id);if(!i||!i.data)return;setFormData(i.data);switchTab('generateur',document.querySelector('.tab-btn'));showToast('📂 Traçage rechargé');}
+function deleteHistItem(id){try{let h=JSON.parse(localStorage.getItem('edpc_history')||'[]');h=h.filter(x=>x.id!==id);localStorage.setItem('edpc_history',JSON.stringify(h));renderHistorique();showToast('🗑️ Supprimé');}catch(e){}}
+function loadEdpcSuivant(id){
+  const item=getHistItem(id);if(!item||!item.data)return;
+  const next={...item.data};
+
+  // Vider le contenu, garder identité + CRC
+  ['priorites','autoanalyse','feedback','feedbackDate','feedbackSemaine',
+   'dateEdpc','semaineEdpc','pacAction','pacEngMgr'].forEach(k=>{next[k]='';});
+  next.dateEdpc=new Date().toISOString().split('T')[0];
+  next.situation=null;
+  next.axe=''; // Vider — la brique continuité prend le relai
+
+  // Stocker les données précédentes pour la brique continuité
+  window._prevEdpc = {
+    periode:   item.periode || 'période précédente',
+    situation: item.data.situation,
+    priorites: (item.data.priorites||'').split('\n').filter(l=>l.trim()),
+    pacAction: (item.data.pacAction||'').split('\n').filter(l=>l.trim())[0]||'',
+    feedback:  (item.data.feedback||'').split('\n').filter(l=>l.trim())[0]||'',
+  };
+
+  // Mettre à jour le CRC et le badge header
+  if(item.data.crc){
+    selectedCRC=item.data.crc;
+    const badge=document.getElementById('hdr-crc-badge');
+    if(badge){badge.textContent=item.data.crc;badge.className='hdr-badge hdr-'+item.data.crc.toLowerCase();}
+  }
+
+  document.querySelectorAll('.sit-btn').forEach(b=>b.classList.remove('s-prog','s-stag','s-non'));
+  currentSituation=null;
+  hideFeedbackResultPanel();
+  hidePacResultPanel();
+
+  setFormData(next);
+  setTimeout(()=>renderContinuiteCard(), 400);
+  switchTab('generateur',document.querySelector('.tab-btn'));
+  showToast(`🔄 EDPC suivant préparé pour ${item.prenomCourt||item.prenom} — analysez le bilan ci-dessous`,4000);
+}
+
+// =====================================================
+// BRIQUE CONTINUITÉ — chips interactifs
+// =====================================================
+const continuiteSelections = {};
+
+function renderContinuiteCard() {
+  const prev = window._prevEdpc;
+  if(!prev || !prev.priorites.length) return;
+
+  const card = document.getElementById('continuite-card');
+  if(!card) return;
+
+  ['reussi','partiel','nonatteint','decision'].forEach(k => continuiteSelections[k]=[]);
+
+  const periodeLabel = document.getElementById('continuite-periode-label');
+  if(periodeLabel) periodeLabel.textContent = prev.periode;
+
+  const recap = document.getElementById('continuite-recap');
+  const situLabel = prev.situation==='progression'?'✅ En progression':prev.situation==='stagnation'?'⚠️ En stagnation':prev.situation==='non-atteinte'?'🔴 Engagements non atteints':'—';
+  if(recap) recap.innerHTML = `
+    <strong>Situation :</strong> ${situLabel}<br>
+    <strong>Priorités fixées :</strong> ${prev.priorites.join(' · ')}<br>
+    ${prev.pacAction ? `<strong>Action PAC :</strong> ${prev.pacAction}<br>` : ''}
+    ${prev.feedback  ? `<strong>Feedback :</strong> ${prev.feedback}` : ''}
+  `;
+
+  ['reussi','partiel','nonatteint'].forEach(cat=>{
+    const el = document.getElementById(`continuite-chips-${cat}`);
+    if(!el) return;
+    el.innerHTML='';
+    const color = cat==='reussi'?'green':cat==='partiel'?'orange':'red';
+    prev.priorites.forEach(prio=>{
+      const btn=document.createElement('button');
+      btn.className=`continuite-chip ${color}`;
+      btn.textContent=prio.replace(/\[.*?\]/g,'').trim();
+      btn.onclick=()=>toggleContinuiteChip(btn,cat,prio,color);
+      el.appendChild(btn);
+    });
+  });
+
+  const decEl = document.getElementById('continuite-chips-decision');
+  if(decEl){
+    decEl.innerHTML='';
+    ['Clôturer cet axe','Poursuivre sur la même trajectoire','Renforcer avec un nouveau PAC','Fixer de nouvelles priorités'].forEach(d=>{
+      const btn=document.createElement('button');
+      btn.className='continuite-chip blue';btn.textContent=d;
+      btn.onclick=()=>toggleContinuiteChip(btn,'decision',d,'blue');
+      decEl.appendChild(btn);
+    });
+  }
+
+  document.getElementById('continuite-preview').textContent='';
+  card.classList.add('visible');
+}
+
+function toggleContinuiteChip(btn, cat, value, color) {
+  const idx = continuiteSelections[cat].indexOf(value);
+  if(idx>-1){ continuiteSelections[cat].splice(idx,1); btn.classList.remove('sel'); }
+  else { continuiteSelections[cat].push(value); btn.classList.add('sel'); }
+  updateContinuitePreview();
+}
+
+function updateContinuitePreview() {
+  let lines=[];
+  if(continuiteSelections.reussi.length)    lines.push(`✅ Réussi : ${continuiteSelections.reussi.join(', ')}`);
+  if(continuiteSelections.partiel.length)   lines.push(`⚠️ Partiellement atteint : ${continuiteSelections.partiel.join(', ')}`);
+  if(continuiteSelections.nonatteint.length)lines.push(`❌ Non atteint : ${continuiteSelections.nonatteint.join(', ')}`);
+  if(continuiteSelections.decision.length)  lines.push(`🎯 Décision : ${continuiteSelections.decision.join(' · ')}`);
+  const el=document.getElementById('continuite-preview');
+  if(el) el.textContent=lines.length?'→ '+lines.join(' | '):'';
+}
+
+function validateContinuite() {
+  const prev=window._prevEdpc;
+  const periodeLabel=prev?prev.periode:'période précédente';
+  let parts=[`── BILAN EDPC PRÉCÉDENT (${periodeLabel}) ──────────────────`];
+  if(continuiteSelections.reussi.length)    parts.push(`✅ Réussi : ${continuiteSelections.reussi.join(', ')}`);
+  if(continuiteSelections.partiel.length)   parts.push(`⚠️ Partiellement atteint : ${continuiteSelections.partiel.join(', ')}`);
+  if(continuiteSelections.nonatteint.length)parts.push(`❌ Non atteint : ${continuiteSelections.nonatteint.join(', ')}`);
+  if(continuiteSelections.decision.length)  parts.push(`🎯 Pour cet EDPC : ${continuiteSelections.decision.join(' · ')}`);
+  if(parts.length<2){showToast('⚠️ Sélectionnez au moins une option');return;}
+  const text=parts.join('\n');
+  const axeEl=document.getElementById('f-axe');
+  if(axeEl){axeEl.value=(axeEl.value.trim()?axeEl.value+'\n\n':'')+text;axeEl.dispatchEvent(new Event('input'));}
+  document.getElementById('continuite-card')?.classList.remove('visible');
+  window._prevEdpc=null;
+  generatePreview();
+  showToast('✅ Bilan inséré dans l\'Analyse Globale');
+}
+
+// =====================================================
+// SUIVI EDPC — OBJECTIF 2/TRIMESTRE
+// =====================================================
+function renderSuiviGate(){
+  const gate=document.getElementById('suivi-gate');if(!gate)return;
+  gate.innerHTML=`<div class="access-gate"><div style="font-size:32px;margin-bottom:12px">🔒</div><h2>Accès sécurisé</h2><p>Entrez votre code d'accès pour consulter le tableau de suivi de votre équipe.</p><input type="password" id="access-input" placeholder="••••" maxlength="12" onkeydown="if(event.key==='Enter')checkAccess()" autocomplete="off"><button class="btn-primary accent" style="width:100%;justify-content:center" onclick="checkAccess()">Accéder →</button><div class="error" id="access-error"></div><div class="access-info"><strong>Comment obtenir votre code ?</strong><br>Contactez votre responsable IDF.</div></div>`;
+}
+
+function checkAccess(){
+  const input=document.getElementById('access-input')?.value?.trim();
+  const err=document.getElementById('access-error');
+  if(!input){err.textContent='Veuillez entrer un code.';return;}
+  let found=null;
+  Object.entries(ACCESS_CODES).forEach(([name,code])=>{if(code===input.toUpperCase())found=name;});
+  if(!found){err.textContent='Code incorrect. Veuillez réessayer.';return;}
+  currentAccessRole=found==='admin'?'admin':`manager:${found}`;
+  renderDashboard();
+}
+
+function renderDashboard(){
+  const gate=document.getElementById('suivi-gate');if(!gate)return;
+  if(!currentAccessRole){renderSuiviGate();return;}
+  let hist=[];
+  try{hist=JSON.parse(localStorage.getItem('edpc_history')||'[]');}catch(e){}
+
+  // Index EDPC par trimestre : manager → cc → [quarter]
+  const done={};      // { manager: { cc: [quarter, ...] } }
+  const ambitions={}; // { manager: { cc: { quarter: [ambition, ...] } } }
+  hist.forEach(h=>{
+    if(!h.manager||!h.prenom)return;
+    if(!done[h.manager])done[h.manager]={};
+    if(!done[h.manager][h.prenom])done[h.manager][h.prenom]=[];
+    const q=h.quarter||h.month||'';
+    if(q)done[h.manager][h.prenom].push(q);
+    // Stocker les ambitions
+    if(!ambitions[h.manager])ambitions[h.manager]={};
+    if(!ambitions[h.manager][h.prenom])ambitions[h.manager][h.prenom]={};
+    if(!ambitions[h.manager][h.prenom][q])ambitions[h.manager][h.prenom][q]=[];
+    if(h.ambition)ambitions[h.manager][h.prenom][q].push(h.ambition);
+  });
+
+  const isAdmin=currentAccessRole==='admin';
+  const mgrFilter=isAdmin?null:currentAccessRole.replace('manager:','');
+
+  // Trimestre courant
+  const now=new Date();
+  const qNum=Math.ceil((now.getMonth()+1)/3);
+  const currentQuarter=`T${qNum} ${now.getFullYear()}`;
+
+  gate.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+      <div style="font-family:'DM Serif Display',serif;font-size:20px">
+        ${isAdmin?'📊 Vue globale — Tous les managers':'📊 Mon tableau de suivi'}
+        ${isAdmin?'<span style="font-size:12px;font-weight:400;color:var(--text-muted);margin-left:8px">Mode superviseur</span>':''}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:13px;font-weight:600;color:var(--accent)">📅 ${currentQuarter}</span>
+        <button class="btn-secondary" style="font-size:12px;padding:6px 12px" onclick="currentAccessRole=null;renderSuiviGate()">🔒 Verrouiller</button>
+      </div>
+    </div>
+    <div id="dash-grid-container"></div>`;
+
+  const container=document.getElementById('dash-grid-container');
+  const grid=document.createElement('div');grid.className='dash-grid';
+
+  const legend=document.createElement('div');
+  legend.style.cssText='display:flex;gap:16px;margin-bottom:12px;font-size:12px;color:var(--text-muted);align-items:center;flex-wrap:wrap;grid-column:1/-1';
+  legend.innerHTML=`
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block"></span>2 EDPC réalisés (objectif)</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span>1 EDPC réalisé</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#e2ddd6;display:inline-block"></span>À réaliser</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:#a78bfa;display:inline-block"></span>EDPC bonus (>2)</span>`;
+
+  let rendered=0;
+  Object.entries(TEAMS).forEach(([crc,managers])=>{
+    Object.entries(managers).forEach(([mgr,conseillers])=>{
+      if(!isAdmin&&mgr.toLowerCase()!==mgrFilter.toLowerCase())return;
+      const mgrDone=done[mgr]||{};
+      let realized=0;let bonus=0;
+      conseillers.forEach(cc=>{
+        const cnt=(mgrDone[cc]||[]).filter(q=>q===currentQuarter).length;
+        realized+=Math.min(cnt,2);
+        if(cnt>2)bonus++;
+      });
+      const total=conseillers.length*2;
+      const pct=total>0?Math.round(realized/total*100):0;
+      const barColor=pct<50?'#ef4444':pct<85?'#f59e0b':'#22c55e';
+      const crcClass=crc==='GO'?'hdr-go':crc==='PGE'?'hdr-pge':'hdr-lst';
+      const ccRows=conseillers.map(cc=>{
+        const ccEdpcs=(mgrDone[cc]||[]).filter(q=>q===currentQuarter);
+        const cnt=ccEdpcs.length;
+        const d1=cnt>=1?'done':'',d2=cnt>=2?'done':cnt>=1?'partial':'';
+        const bonusDots=cnt>2?`<span class="dot bonus" title="${cnt} EDPC réalisés ce trimestre"></span>`.repeat(cnt-2):'';
+
+        // Récupérer les ambitions de ce CC pour ce trimestre
+        const ccAmbitions=(ambitions[mgr]?.[cc]?.[currentQuarter])||[];
+        const AMBITION_LABELS={diag:'DIAG',pac:'PAC','suivi':'Suivi','feedback':'Feedback','':`Sans motif`};
+        const AMBITION_ICONS={diag:'🔵',pac:'🟠',suivi:'🟢',feedback:'🟣','':`⚪`};
+
+        // Détecter les doublons
+        const counts={};
+        ccAmbitions.forEach(a=>{counts[a]=(counts[a]||0)+1;});
+        const hasDuplicate=Object.values(counts).some(c=>c>1);
+
+        const ambBadges=ccAmbitions.length
+          ?ccAmbitions.map((a,i)=>{
+            const isDup=(counts[a]||0)>1;
+            return `<span class="ambition-tag ${a||'none'}" title="${isDup?'⚠️ Même motif utilisé plusieurs fois':''}">
+              ${AMBITION_ICONS[a]||'⚪'} ${AMBITION_LABELS[a]||a||'—'}${isDup?' ⚠️':''}
+            </span>`;
+          }).join('')
+          :'';
+
+        return `<div class="dash-cc-row">
+          <div style="flex:1;min-width:0">
+            <span class="dash-cc-name">${cc}</span>
+            ${ambBadges?`<div class="dash-cc-ambitions">${ambBadges}</div>`:''}
+          </div>
+          <div class="dash-cc-dots">
+            <span class="dot ${d1}" title="EDPC 1"></span>
+            <span class="dot ${d2}" title="EDPC 2"></span>
+            ${bonusDots}
+          </div>
+        </div>`;
+      }).join('');
+      const bonusBadge=bonus>0?`<span class="bonus-badge">⭐ +${bonus} bonus</span>`:'';
+      const card=document.createElement('div');card.className='dash-card';
+      card.innerHTML=`<div class="dash-card-header"><span class="dash-card-name">${mgr} ${bonusBadge}</span><span class="hdr-badge ${crcClass}">${crc}</span></div><div class="dash-progress-wrap"><div class="dash-progress-fill" style="width:${pct}%;background:${barColor}"></div></div><div class="dash-stats-row"><span>${realized}/${total} EDPC ce trimestre</span><span style="font-weight:700;color:${barColor}">${pct}%</span></div><div class="dash-cc-list">${ccRows}</div>`;
+      grid.appendChild(card);rendered++;
+    });
+  });
+
+  if(!rendered){container.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📊</div><p>Aucune donnée à afficher.</p></div>';}
+  else{grid.insertBefore(legend,grid.firstChild);container.appendChild(grid);}
+}
+
+// =====================================================
+// BILAN CRC — CODIR ONLY
+// =====================================================
+function renderBilanGate(){
+  const gate=document.getElementById('bilan-gate');if(!gate)return;
+  gate.innerHTML=`<div class="access-gate"><div style="font-size:32px;margin-bottom:12px">🔒</div><h2>Bilan CRC — Accès CODIR</h2><p>Ce tableau de bord est réservé aux membres du CODIR.</p><input type="password" id="bilan-input" placeholder="Code CODIR" maxlength="12" onkeydown="if(event.key==='Enter')checkBilanAccess()" autocomplete="off"><button class="btn-primary accent" style="width:100%;justify-content:center" onclick="checkBilanAccess()">Accéder →</button><div class="error" id="bilan-error"></div></div>`;
+}
+
+function checkBilanAccess(){
+  const input=document.getElementById('bilan-input')?.value?.trim();
+  const err=document.getElementById('bilan-error');
+  if(!input){err.textContent='Veuillez entrer le code CODIR.';return;}
+  if(input.toUpperCase()!=='CODIR2026'){err.textContent='Code incorrect.';return;}
+  renderBilanContent();
+}
+
+function renderBilanContent(){
+  const gate=document.getElementById('bilan-gate');if(!gate)return;
+  gate.innerHTML=`
+    <div class="stats-grid">
+      <div class="stat-card stat-go"><div class="crc-label">CRC GO</div><div class="crc-rate">76%</div><div class="crc-sub">Seuil : 85%</div><div class="progress-bar-wrap"><div class="progress-bar bar-go" style="width:76%"></div></div></div>
+      <div class="stat-card stat-pge"><div class="crc-label">CRC PGE</div><div class="crc-rate">83%</div><div class="crc-sub">Seuil : 85%</div><div class="progress-bar-wrap"><div class="progress-bar bar-pge" style="width:83%"></div></div></div>
+      <div class="stat-card stat-lst"><div class="crc-label">CRC LST</div><div class="crc-rate">72%</div><div class="crc-sub">Seuil : 85%</div><div class="progress-bar-wrap"><div class="progress-bar bar-lst" style="width:72%"></div></div></div>
+      <div class="stat-card stat-idf"><div class="crc-label">IDF Global</div><div class="crc-rate">76%</div><div class="crc-sub">160 CC · Objectif : 85%</div><div class="progress-bar-wrap"><div class="progress-bar bar-idf" style="width:76%"></div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Détail par axe — IDF</div>
+      <table class="axe-table">
+        <thead><tr><th>Axe</th><th>GO</th><th>PGE</th><th>LST</th><th>Priorité</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Feedback tracé</strong></td><td><span class="pill-bad">4%</span></td><td><span class="pill-warn">48%</span></td><td><span class="pill-warn">38%</span></td><td><span class="pill-bad">🔴 Critique</span></td></tr>
+          <tr><td><strong>Planification PAC</strong></td><td><span class="pill-warn">30%</span></td><td><span class="pill-warn">42%</span></td><td><span class="pill-bad">22%</span></td><td><span class="pill-bad">🔴 Critique</span></td></tr>
+          <tr><td><strong>Auto-analyse CC</strong></td><td><span class="pill-warn">55%</span></td><td><span class="pill-ok">89%</span></td><td><span class="pill-warn">51%</span></td><td><span class="pill-warn">🟠 Important</span></td></tr>
+          <tr><td><strong>Priorités identifiées</strong></td><td><span class="pill-ok">99%</span></td><td><span class="pill-ok">97%</span></td><td><span class="pill-ok">99%</span></td><td><span class="pill-ok">✅ Fort</span></td></tr>
+          <tr><td><strong>PAC renseigné</strong></td><td><span class="pill-ok">100%</span></td><td><span class="pill-ok">98%</span></td><td><span class="pill-ok">97%</span></td><td><span class="pill-ok">✅ Fort</span></td></tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// =====================================================
+// RESET / TABS
+// =====================================================
+// =====================================================
+// EXPORT TRACAGE (.html → Word/PDF compatible)
+// =====================================================
+function exportTracage(){
+  const mandatory=['f-priorites','f-axe','f-pac-action','f-feedback','f-autoanalyse'];
+  const missing=mandatory.filter(id=>!v(id));
+  if(missing.length>0){showToast('⚠️ Complétez toutes les briques obligatoires avant d\'exporter',3500);return;}
+
+  const cc       = v('f-prenom').replace(/\s+/g,'_') || 'CC';
+  const dateEdpc = v('f-date-edpc') || new Date().toISOString().split('T')[0];
+  const filename = `EDPC_${cc}_${dateEdpc}.doc`;
+  const text     = document.getElementById('preview-text').textContent;
+
+  // Générer un document Word-compatible (HTML encapsulé)
+  const html = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8">
+<style>
+  body{font-family:Calibri,Arial,sans-serif;font-size:12pt;color:#1e293b;line-height:1.6;margin:40px}
+  h1{font-size:16pt;color:#1d3557;border-bottom:2pt solid #1d4ed8;padding-bottom:6pt}
+  .section{margin:18pt 0 0 0}
+  .section-title{font-size:13pt;font-weight:bold;color:#1d3557;margin-bottom:6pt}
+  .content{white-space:pre-wrap;font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#1e293b;line-height:1.7}
+  .footer{margin-top:30pt;font-size:9pt;color:#94a3b8;border-top:1pt solid #e2e8f0;padding-top:8pt}
+</style>
+</head>
+<body>
+<h1>📋 TRAÇAGE EDPC</h1>
+<div class="content">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>
+<div class="footer">Généré via EDPC Manager · IDF — ${new Date().toLocaleDateString('fr-FR')}</div>
+</body></html>`;
+
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`📄 Fichier ${filename} téléchargé`, 3000);
+}
+
+// =====================================================
+// EXPAND TEXTAREA — modal plein écran pour édition confortable
+// =====================================================
+let expandSourceId = null;
+
+function expandTextarea(fieldId, title) {
+  expandSourceId = fieldId;
+  const src = document.getElementById(fieldId);
+  if(!src) return;
+  const overlay = document.getElementById('expand-modal-overlay');
+  const modal   = document.getElementById('expand-modal-textarea');
+  const titleEl = document.getElementById('expand-modal-title');
+  if(!overlay || !modal) return;
+  titleEl.textContent = title || 'Édition';
+  modal.value = src.value;
+  overlay.style.display = 'flex';
+  setTimeout(() => { modal.focus(); modal.setSelectionRange(modal.value.length, modal.value.length); }, 100);
+}
+
+function saveExpand() {
+  if(!expandSourceId) return;
+  const src   = document.getElementById(expandSourceId);
+  const modal = document.getElementById('expand-modal-textarea');
+  if(src && modal){ src.value = modal.value; src.dispatchEvent(new Event('input')); }
+  closeExpand();
+  generatePreview();
+  showToast('✅ Contenu enregistré');
+}
+
+function closeExpand() {
+  const overlay = document.getElementById('expand-modal-overlay');
+  if(overlay) overlay.style.display = 'none';
+  expandSourceId = null;
+}
+// =====================================================
+function genererRappelOutlook() {
+  const email    = document.getElementById('f-email-manager')?.value?.trim();
+  const prenom   = document.getElementById('f-prenom')?.value?.trim();
+  const nextEdpc = document.getElementById('f-feedback-date')?.value
+                || document.getElementById('f-date-edpc')?.value;
+
+  if (!nextEdpc) { showToast('⚠️ Renseignez la date du prochain EDPC dans le Feedback'); return; }
+
+  const edpcDate     = new Date(nextEdpc + 'T09:00:00');
+  const reminderDate = new Date(edpcDate);
+  reminderDate.setDate(reminderDate.getDate() - 2);
+  reminderDate.setHours(9, 0, 0, 0);
+  const reminderEnd  = new Date(reminderDate);
+  reminderEnd.setMinutes(reminderEnd.getMinutes() + 30);
+
+  const toICS = d =>
+    d.getFullYear() +
+    String(d.getMonth()+1).padStart(2,'0') +
+    String(d.getDate()).padStart(2,'0') + 'T' +
+    String(d.getHours()).padStart(2,'0') +
+    String(d.getMinutes()).padStart(2,'0') + '00';
+
+  const prenomCC  = prenom || 'votre conseiller(ère)';
+  const dateFR    = edpcDate.toLocaleDateString('fr-FR');
+  const attendee  = email ? `\r\nORGANIZER;CN=EDPC Manager:mailto:${email}\r\nATTENDEE;ROLE=REQ-PARTICIPANT;RSVP=TRUE:mailto:${email}` : '';
+
+  const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//EDPC Manager IDF//FR\r\nCALSCALE:GREGORIAN\r\nMETHOD:REQUEST\r\nBEGIN:VEVENT\r\nUID:edpc-${Date.now()}@idf\r\nDTSTAMP:${toICS(new Date())}\r\nDTSTART:${toICS(reminderDate)}\r\nDTEND:${toICS(reminderEnd)}\r\nSUMMARY:📋 Préparer EDPC – ${prenomCC} (J-2)\r\nDESCRIPTION:Rappel J-2 avant l'EDPC de ${prenomCC} prévu le ${dateFR}.\\nPoints à préparer :\\n- Indicateurs\\n- Bilan PAC\\n- Priorités\\n- Feedback${attendee}\r\nSTATUS:CONFIRMED\r\nBEGIN:VALARM\r\nTRIGGER:-PT30M\r\nACTION:DISPLAY\r\nDESCRIPTION:Rappel préparation EDPC ${prenomCC}\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR`;
+
+  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `Preparation_EDPC_${prenomCC.replace(/\s+/g,'_')}_J2.ics`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast(email ? `📅 Rappel J-2 généré pour ${prenomCC}` : '📅 Fichier .ics téléchargé (email optionnel)', 4000);
+}
+
+// =====================================================
+// COPIER UNE BRIQUE INDIVIDUELLE
+// =====================================================
+function copySection(fieldId, btnEl) {
+  const val = v(fieldId);
+  if (!val) { showToast('⚠️ Cette section est vide'); return; }
+  navigator.clipboard.writeText(val).then(() => {
+    const orig = btnEl.textContent;
+    btnEl.textContent = '✅';
+    btnEl.style.color = '#166534';
+    setTimeout(() => { btnEl.textContent = orig; btnEl.style.color = ''; }, 1500);
+    showToast('📋 Section copiée !');
+  });
+}
+
+function resetForm(){
+  ['f-manager','f-prenom','f-periode','f-priorites','f-axe','f-autoanalyse','f-feedback','f-feedback-date','f-feedback-semaine','f-pac-action','f-pac-eng-mgr','f-semaine-edpc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('f-annee').value='2026';
+  document.getElementById('f-date-edpc').value='';
+  document.getElementById('f-prenom').innerHTML='<option value="">— Choisir d\'abord le manager —</option>';
+  if(selectedCRC)populateManagersForCRC(selectedCRC);
+  currentSituation=null;
+  document.querySelectorAll('.sit-btn').forEach(b=>b.classList.remove('s-prog','s-stag','s-non'));
+  hideFeedbackResultPanel();
+  renderFeedbackChips();renderManagerAxesChips();renderAutoAnalyseChips();
+  setSaveIndicator(false);try{localStorage.removeItem('edpc_draft');}catch(e){}
+  generatePreview();showToast('↺ Formulaire réinitialisé');
+}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const b=btn||document.querySelector('.tab-btn');if(b)b.classList.add('active');
+  if(name==='historique')renderHistorique();
+  if(name==='suivi'){if(!currentAccessRole)renderSuiviGate();else renderDashboard();}
+  if(name==='bilan')renderBilanGate();
+}
+
+// =====================================================
+// INIT
+// =====================================================
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('f-date-edpc').value=new Date().toISOString().split('T')[0];
+  document.addEventListener('input',generatePreview);
+  // Bilan tab accessible depuis les tabs mais avec code gate
+  const bilanBtn=document.getElementById('tab-bilan-btn');
+  if(bilanBtn)bilanBtn.style.display=''; // visible mais protégé par code
+  renderSuiviGate();
+  renderLibrary();
+  generatePreview();
+  window.addEventListener('scroll',()=>{
+    const btn=document.getElementById('scroll-top-btn');
+    if(btn)btn.classList.toggle('visible',window.scrollY>300);
+  });
+});
+</script>
+</body>
+</html>
